@@ -1,0 +1,298 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root,
+  .dark {
+    --background: #0A0A0A;
+    --foreground: #F5F5F0;
+    --muted: #8E8E8A;
+    --muted-dark: #5A5A57;
+    --surface: #111111;
+    --surface-subtle: #161616;
+    --surface-elevated: #1C1C1C;
+    --surface-hover: #222222;
+    --border: #1E1E1E;
+    --border-hover: #2F2F2F;
+    --amber: #F2A623;
+    --amber-hover: #FFB73B;
+    --amber-dim: #C28215;
+    --amber-subtle: rgba(242, 166, 35, 0.08);
+    --amber-glow: rgba(242, 166, 35, 0.15);
+  }
+
+  .light {
+    --background: #FAFAFA;
+    --foreground: #0F172A;
+    --muted: #334155;
+    --muted-dark: #64748B;
+    --surface: #FFFFFF;
+    --surface-subtle: #F1F5F9;
+    --surface-elevated: #E2E8F0;
+    --surface-hover: #CBD5E1;
+    --border: #E2E8F0;
+    --border-hover: #CBD5E1;
+    --amber: #D97706;
+    --amber-hover: #B45309;
+    --amber-dim: #92400E;
+    --amber-subtle: rgba(217, 119, 6, 0.1);
+    --amber-glow: rgba(217, 119, 6, 0.2);
+  }
+
+  html.dark {
+    color-scheme: dark;
+    background-color: #0A0A0A;
+    color: #F5F5F0;
+  }
+
+  html.light {
+    color-scheme: light;
+    background-color: #FAFAFA;
+    color: #0F172A;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* Custom subtle developer scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--background);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-hover);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--amber);
+  }
+
+  /* Selection highlight strictly in amber */
+  ::selection {
+    background-color: var(--amber);
+    color: #0A0A0A;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Hairline utility classes */
+.border-hairline {
+  border-width: 1px;
+  border-color: var(--border);
+}
+
+.border-hairline-amber {
+  border-width: 1px;
+  border-color: rgba(242, 166, 35, 0.35);
+}
+
+.border-hairline-hover:hover {
+  border-color: var(--border-hover);
+}
+
+/* Technical grid background lines */
+.bg-tech-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+/* Focus styles for keyboard accessibility */
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   LIGHT MODE DESIGN SYSTEM & HIGH-CONTRAST TYPOGRAPHY
+   Rich obsidian black text, dark slate secondary text, warm amber accents
+   ========================================================================== */
+
+.light {
+  background-color: #FAFAFA !important;
+  color: #0F172A !important;
+}
+
+.light body {
+  background-color: #FAFAFA !important;
+  color: #0F172A !important;
+}
+
+/* Headings & Typography High Contrast in Light Mode */
+.light h1,
+.light h2,
+.light h3,
+.light h4,
+.light h5,
+.light h6 {
+  color: #0F172A !important;
+}
+
+.light p,
+.light li {
+  color: #1E293B;
+}
+
+/* Tech grid light mode */
+.light .bg-tech-grid {
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.045) 1px, transparent 1px) !important;
+}
+
+/* Surfaces & Card Background Overrides for Light Mode */
+.light .bg-background,
+.light .bg-\[\#0A0A0A\],
+.light .bg-\[\#080808\],
+.light .bg-\[\#0A0A0A\]\/95,
+.light .bg-\[\#0A0A0A\]\/90 {
+  background-color: #FAFAFA !important;
+}
+
+.light .bg-\[\#0C0C0C\],
+.light .bg-\[\#0D0D0D\],
+.light .bg-\[\#0E0E0E\],
+.light .bg-surface {
+  background-color: #FFFFFF !important;
+}
+
+.light .bg-\[\#101010\],
+.light .bg-\[\#111111\],
+.light .bg-\[\#121212\],
+.light .bg-\[\#111111\]\/80,
+.light .bg-\[\#121212\]\/80,
+.light .bg-\[\#121212\]\/95 {
+  background-color: #F8FAFC !important;
+}
+
+.light .bg-\[\#141414\],
+.light .bg-\[\#161616\] {
+  background-color: #F1F5F9 !important;
+}
+
+.light .bg-\[\#1A1A1A\],
+.light .bg-\[\#1C1C1C\],
+.light .bg-\[\#1E1E1E\],
+.light .bg-\[\#1F1F1F\] {
+  background-color: #E2E8F0 !important;
+}
+
+/* Text Colors in Light Mode */
+.light .text-foreground,
+.light .text-\[\#F5F5F0\],
+.light [class*="text-foreground"] {
+  color: #0F172A !important;
+}
+
+.light .text-muted,
+.light .text-\[\#8E8E8A\],
+.light [class*="text-muted"] {
+  color: #334155 !important;
+}
+
+.light .text-muted-dark,
+.light .text-\[\#5A5A57\] {
+  color: #64748B !important;
+}
+
+.light .text-\[\#A3A3A0\] {
+  color: #1E293B !important;
+}
+
+/* Hairline Borders in Light Mode */
+.light .border-\[\#1E1E1E\],
+.light .border-\[\#1C1C1C\],
+.light .border-\[\#1A1A1A\],
+.light .border-\[\#181818\],
+.light .border-\[\#161616\],
+.light .border-hairline {
+  border-color: #E2E8F0 !important;
+}
+
+.light .border-\[\#222222\],
+.light .border-\[\#242424\],
+.light .border-\[\#262626\],
+.light .border-\[\#282828\],
+.light .border-\[\#2A2A2A\],
+.light .border-\[\#2C2C2C\],
+.light .border-\[\#2F2F2F\] {
+  border-color: #CBD5E1 !important;
+}
+
+.light .border-\[\#383838\],
+.light .border-\[\#333333\] {
+  border-color: #94A3B8 !important;
+}
+
+/* Inputs & Form Elements in Light Mode */
+.light input,
+.light textarea,
+.light select {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+
+.light input::placeholder,
+.light textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* Amber text adjustments for light mode contrast */
+.light .text-amber,
+.light .text-amber-dim {
+  color: #D97706 !important;
+}
+
+.light .border-amber,
+.light .border-amber\/40,
+.light .border-amber\/30 {
+  border-color: #D97706 !important;
+}
+
+.light .bg-amber {
+  background-color: #D97706 !important;
+  color: #FFFFFF !important;
+}
+
+.light .bg-amber\/10,
+.light .bg-amber\/5 {
+  background-color: rgba(217, 119, 6, 0.08) !important;
+}
+
+/* Modals & Dialogs in Light Mode */
+.light .bg-black\/80 {
+  background-color: rgba(15, 23, 42, 0.6) !important;
+}
