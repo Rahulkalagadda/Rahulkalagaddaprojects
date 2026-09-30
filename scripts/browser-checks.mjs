@@ -52,6 +52,7 @@ try {
   await page.getByRole("button", { name: "Search pages and projects", exact: true }).click();
   await page.getByRole("textbox", { name: "Search pages and projects" }).fill("Voice AI");
   await page.locator("dialog").getByRole("link", { name: /Voice AI Agent/ }).click();
+  await page.waitForURL("**/projects/voice-ai-agent");
   assert.ok(page.url().endsWith("/projects/voice-ai-agent"), "Command search navigates to case study");
   assert.equal(await page.locator("dialog").isVisible(), false, "Command search closes on navigation");
 
@@ -127,6 +128,7 @@ try {
   await page.goto(origin, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.locator("#mobile-navigation").getByRole("link", { name: "About", exact: true }).click();
+  await page.waitForURL("**/about");
   assert.ok(page.url().endsWith("/about"), "Mobile navigation changes page");
   assert.equal(await page.locator("#mobile-navigation").count(), 0, "Mobile navigation closes");
   await page.goto(origin, { waitUntil: "networkidle" });
