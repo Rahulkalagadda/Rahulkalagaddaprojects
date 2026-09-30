@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
-const { chromium } = await import(pathToFileURL(process.env.PLAYWRIGHT_PATH).href);
+const { chromium } = await import(pathToFileURL((process.env.PLAYWRIGHT_PATH || process.env.RUNNER_TEMP + "/portfolio-browser/node_modules/playwright/index.mjs")).href);
 const origin = "http://127.0.0.1:3000";
 const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "--hostname", "127.0.0.1", "--port", "3000"], {
   stdio: ["ignore", "pipe", "pipe"],

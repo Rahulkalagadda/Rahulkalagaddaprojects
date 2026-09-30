@@ -35,8 +35,7 @@ jobs:
           node "$RUNNER_TEMP/portfolio-browser/node_modules/playwright/cli.js" install --with-deps chromium
       - name: Verify routes, responsive layout, controls, and contact drafts
         run: node scripts/browser-checks.mjs
-        env:
-          PLAYWRIGHT_PATH: /home/runner/work/_temp/portfolio-browser/node_modules/playwright/index.mjs
+
       - name: Upload visual checks
         if: always()
         uses: actions/upload-artifact@v4

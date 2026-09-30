@@ -53,6 +53,8 @@ export function Scene({
         : "Reflective three-dimensional chrome sculpture.");
       canvas.tabIndex = interactive ? 0 : -1;
       element.appendChild(canvas);
+      disposeScene = () => { renderer.dispose(); renderer.forceContextLoss(); canvas.remove(); };
+      let lostContext = false;
       let frame = 0;
       let visible = true;
       let previousTime = 0;
@@ -101,9 +103,10 @@ export function Scene({
       controls.enableZoom = false;
       controls.enablePan = false;
       controls.enableDamping = false;
+      canvas.style.touchAction = "pan-y";
       controls.rotateSpeed = 0.55;
-      const canAnimate = () => visible && !document.hidden && options.current.running && (!motion.matches || options.current.userMotion);
-      const render = () => { if (!disposed) renderer.render(scene, camera); };
+      const canAnimate = () => !lostContext && visible && !document.hidden && options.current.running && (!motion.matches || options.current.userMotion);
+      const render = () => { if (!disposed && !lostContext) renderer.render(scene, camera); };
       const tick = (time: number) => {
         frame = 0;
         if (disposed) return;
@@ -179,6 +182,8 @@ export function Scene({
       };
       const onLost = (event: Event) => {
         event.preventDefault();
+        lostContext = true;
+        canvas.tabIndex = -1;
         if (frame) cancelAnimationFrame(frame);
         frame = 0;
         if (!disposed) setState("fallback");
