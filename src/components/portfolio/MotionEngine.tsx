@@ -83,12 +83,13 @@ export function MotionEngine({ blocked }: { blocked: boolean }) {
           try { target = document.getElementById(decodeURIComponent(url.hash.slice(1))); } catch { return; }
           if (!target) return;
           event.preventDefault();
-          lenis.scrollTo(target, { onComplete: () => {
+          const destination = target;
+          lenis.scrollTo(destination, { onComplete: () => {
             if (window.location.hash !== url.hash) window.history.pushState(window.history.state, "", url.hash);
-            const temporaryFocus = !target.hasAttribute("tabindex") && !target.matches("a[href],button,input,select,textarea");
-            if (temporaryFocus) target.setAttribute("tabindex", "-1");
-            target.focus({ preventScroll: true });
-            if (temporaryFocus) target.addEventListener("blur", () => target.removeAttribute("tabindex"), { once: true });
+            const temporaryFocus = !destination.hasAttribute("tabindex") && !destination.matches("a[href],button,input,select,textarea");
+            if (temporaryFocus) destination.setAttribute("tabindex", "-1");
+            destination.focus({ preventScroll: true });
+            if (temporaryFocus) destination.addEventListener("blur", () => destination.removeAttribute("tabindex"), { once: true });
           } });
         };
         document.addEventListener("click", onAnchorClick);
@@ -181,7 +182,7 @@ export function MotionEngine({ blocked }: { blocked: boolean }) {
             if (element.contains(target)) { tween.progress(1); tween.scrollTrigger?.kill(); }
           });
           const bounds = target.getBoundingClientRect();
-          if (target === main || bounds.top < 80 || bounds.bottom > window.innerHeight) {
+          if (target === main || bounds.top < 80 || (bounds.bottom > window.innerHeight && bounds.height < window.innerHeight - 110)) {
             lenis.scrollTo(target, { immediate: true });
           }
         };
