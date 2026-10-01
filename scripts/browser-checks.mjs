@@ -69,9 +69,14 @@ try {
   await page.getByRole("button", { name: "Pause visual effects", exact: true }).click();
   await page.waitForFunction(() => document.documentElement.dataset.effects === "off" && document.documentElement.dataset.scrolling === "native");
   await page.evaluate(() => window.scrollTo(0, 0));
-  const stillHero = await page.locator('[data-scene-variant="hero"] canvas').screenshot();
-  await page.waitForTimeout(200);
-  assert.ok(stillHero.equals(await page.locator('[data-scene-variant="hero"] canvas').screenshot()), "Global pause stops automatic hero motion");
+  await page.waitForFunction(() => window.scrollY === 0);
+  // Let the offscreen scene's visibility callback and canvas compositing settle.
+  await page.waitForTimeout(400);
+  const heroCanvas = page.locator('[data-scene-variant="hero"] canvas');
+  const stillHero = await heroCanvas.screenshot({ path: "artifacts/hero-paused-before.png" });
+  await page.waitForTimeout(300);
+  const stillHeroAfter = await heroCanvas.screenshot({ path: "artifacts/hero-paused-after.png" });
+  assert.ok(stillHero.equals(stillHeroAfter), "Global pause stops automatic hero motion");
   await page.reload({ waitUntil: "networkidle" });
   await page.waitForFunction(() => document.documentElement.dataset.effects === "off");
   await page.getByRole("button", { name: "Enable visual effects", exact: true }).click();
