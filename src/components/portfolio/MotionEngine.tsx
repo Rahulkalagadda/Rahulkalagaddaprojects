@@ -53,7 +53,7 @@ export function MotionEngine({ blocked }: { blocked: boolean }) {
         const lenis = new LenisClass({
           lerp: 0.085, smoothWheel: true, syncTouch: false, autoRaf: false,
           respectReducedMotion: true, stopInertiaOnNavigate: true,
-          anchors: { offset: -108 },
+          anchors: true,
           prevent: node => node.hasAttribute("data-lenis-prevent"),
         });
         scroller.current = lenis;
@@ -152,7 +152,7 @@ export function MotionEngine({ blocked }: { blocked: boolean }) {
           });
           const bounds = target.getBoundingClientRect();
           if (target === main || bounds.top < 80 || bounds.bottom > window.innerHeight) {
-            lenis.scrollTo(target, { immediate: true, offset: -110 });
+            lenis.scrollTo(target, { immediate: true });
           }
         };
         main.addEventListener("focusin", onFocus);

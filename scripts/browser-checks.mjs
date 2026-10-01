@@ -78,6 +78,9 @@ try {
     const top = document.getElementById("selected-work").getBoundingClientRect().top;
     return top >= 80 && top <= 140;
   }, undefined, { timeout: 10000 });
+  await page.waitForTimeout(500);
+  const anchorTop = await page.locator("#selected-work").evaluate(element => element.getBoundingClientRect().top);
+  assert.ok(anchorTop >= 80 && anchorTop <= 140, "Anchor retains the sticky-header offset after scrolling settles");
   await page.getByRole("button", { name: "Pause visual effects", exact: true }).click();
   await page.waitForFunction(() => document.documentElement.dataset.effects === "off" && document.documentElement.dataset.scrolling === "native");
   await page.evaluate(() => window.scrollTo(0, 0));
