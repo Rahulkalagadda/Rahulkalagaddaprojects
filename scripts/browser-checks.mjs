@@ -124,6 +124,126 @@ try {
   await failedFilm.close();
   console.log("PASS: scroll-driven forest film, decoded frames, reverse scrubbing, sticky hero, idle frame hold, phone film, global pause, reduced motion, failed-video fallback.");
 
+  // Observe native audio nodes and rendered samples; verify that controls affect real sound.
+  const musicPage = await mediaBrowser.newPage({ viewport: { width: 1440, height: 1100 }, reducedMotion: "reduce" });
+  musicPage.on("pageerror", error => errors.push(error.message));
+  await musicPage.addInitScript(disableWebGL);
+  await musicPage.addInitScript(() => {
+    window.__forestContexts = [];
+    window.__forestStarts = [];
+    window.__forestScores = [];
+    const NativeContext = window.AudioContext;
+    window.AudioContext = class extends NativeContext {
+      constructor(...args) { super(...args); window.__forestContexts.push(this); }
+      createAnalyser() { const node = super.createAnalyser(); window.__forestAnalyser = node; return node; }
+      createBufferSource() {
+        const node = super.createBufferSource();
+        const start = node.start.bind(node);
+        node.start = (...args) => { window.__forestStarts.push({ offset: args[1] || 0, duration: node.buffer?.duration, loop: node.loop }); return start(...args); };
+        return node;
+      }
+    };
+    const render = OfflineAudioContext.prototype.startRendering;
+    OfflineAudioContext.prototype.startRendering = async function(...args) {
+      const buffer = await render.apply(this, args);
+      const samples = buffer.getChannelData(0);
+      let peak = 0; let sum = 0; let hash = 2166136261;
+      for (let i = 0; i < samples.length; i++) { peak = Math.max(peak, Math.abs(samples[i])); sum += samples[i] * samples[i]; if (i % 50 === 0) hash = Math.imul(hash ^ Math.round(samples[i] * 32767), 16777619) >>> 0; }
+      window.__forestScores.push({ duration: buffer.duration, peak, rms: Math.sqrt(sum / samples.length), hash });
+      return buffer;
+    };
+    window.__forestRms = () => {
+      if (!window.__forestAnalyser) return 0;
+      const values = new Uint8Array(window.__forestAnalyser.fftSize);
+      window.__forestAnalyser.getByteTimeDomainData(values);
+      return Math.sqrt(Array.from(values).reduce((sum, value) => sum + Math.pow((value - 128) / 128, 2), 0) / values.length);
+    };
+  });
+  await musicPage.goto(origin, { waitUntil: "networkidle" });
+  assert.equal(await musicPage.evaluate(() => window.__forestContexts.length), 0, "Music does not create an audio context or autoplay on arrival");
+  const room = musicPage.locator("#listening-room");
+  await musicPage.locator("#field-notes details summary").first().focus();
+  await musicPage.keyboard.press("Enter");
+  assert.equal(await musicPage.locator("#field-notes details").first().getAttribute("open"), "", "Field notes can be expanded with a keyboard");
+  await musicPage.locator("#portfolio-questions summary").nth(1).click();
+  assert.equal(await musicPage.locator("#portfolio-questions").getByRole("link", { name: "Compare projects" }).isVisible(), true, "FAQ reveals useful navigation");
+  await room.getByRole("button", { name: "Play music", exact: true }).click();
+  await room.locator('[data-audio-state="playing"]').waitFor({ timeout: 20000 });
+  await musicPage.waitForFunction(() => window.__forestRms() > .002, undefined, { timeout: 10000 });
+  const volume = room.getByRole("slider", { name: "Music volume", exact: true });
+  await volume.focus();
+  await musicPage.keyboard.press("Home");
+  assert.equal(await room.locator(".music-volume output").textContent(), "0%", "Volume supports keyboard adjustment");
+  await musicPage.waitForFunction(() => window.__forestRms() < .001);
+  await musicPage.keyboard.press("End");
+  assert.equal(await room.locator(".music-volume output").textContent(), "100%");
+  await musicPage.waitForFunction(() => window.__forestRms() > .002);
+  await room.getByRole("button", { name: "Mute music", exact: true }).click();
+  await musicPage.waitForFunction(() => window.__forestRms() < .001);
+  assert.equal(await room.locator(".music-volume output").textContent(), "Muted", "Mute changes both sound and its visible state");
+  await room.getByRole("button", { name: "Unmute music", exact: true }).click();
+  await musicPage.waitForFunction(() => window.__forestRms() > .002);
+  const playhead = room.getByRole("slider", { name: "Playback position", exact: true });
+  await playhead.focus();
+  await musicPage.keyboard.press("Home");
+  await room.locator('[data-audio-state="playing"]').waitFor();
+  await musicPage.keyboard.press("PageUp");
+  await room.locator('[data-audio-state="playing"]').waitFor();
+  const seekStart = await musicPage.evaluate(() => window.__forestStarts.at(-1));
+  assert.ok(seekStart.offset > 6 && seekStart.offset < 9, "Seeking changes the native audio source's offset");
+  assert.equal(seekStart.duration, 72, "The actual score matches the displayed duration");
+  assert.equal(seekStart.loop, true, "The actual audio source loops");
+  await room.getByRole("button", { name: "Pause music", exact: true }).click();
+  await musicPage.waitForFunction(() => window.__forestContexts.at(-1).state === "suspended");
+  const pausedPosition = await playhead.inputValue();
+  await musicPage.waitForTimeout(400);
+  assert.equal(await playhead.inputValue(), pausedPosition, "Pause holds the playhead and suspends the audio context");
+  await room.getByRole("button", { name: "Play music", exact: true }).click();
+  await room.locator('[data-audio-state="playing"]').waitFor();
+  await room.getByRole("button", { name: "Next music track" }).click();
+  await room.locator('[data-track="moonlight"][data-audio-state="playing"]').waitFor({ timeout: 20000 });
+  await room.getByRole("button", { name: "Next music track" }).click();
+  await room.locator('[data-track="first-light"][data-audio-state="playing"]').waitFor({ timeout: 20000 });
+  const scores = await musicPage.evaluate(() => window.__forestScores);
+  assert.equal(new Set(scores.map(score => score.hash)).size, 3, "Each soundtrack has distinct rendered audio");
+  assert.ok(scores.every(score => score.peak < 1 && score.rms > .01), "Scores have audible content without clipped samples");
+  console.log("MUSIC_DIAGNOSTICS:" + JSON.stringify(scores));
+  await musicPage.emulateMedia({ reducedMotion: "no-preference" });
+  await musicPage.waitForFunction(() => document.documentElement.dataset.effects === "on");
+  assert.equal(await room.locator(".music-record").evaluate(node => getComputedStyle(node).animationPlayState), "running", "The record rotates during playback");
+  await musicPage.getByRole("button", { name: "Pause visual effects", exact: true }).click();
+  await musicPage.waitForFunction(() => document.documentElement.dataset.effects === "off");
+  assert.equal(await room.locator(".music-record").evaluate(node => getComputedStyle(node).animationPlayState), "paused", "Visual pause stops record animation");
+  assert.equal(await room.locator(".listening-panel").getAttribute("data-audio-state"), "playing", "Visual preference preserves explicitly requested music");
+  await room.screenshot({ path: "artifacts/listening-room-desktop.png", animations: "disabled" });
+  await musicPage.locator("#field-notes").screenshot({ path: "artifacts/field-notes-desktop.png" });
+  await musicPage.locator("header").getByRole("link", { name: "Projects", exact: true }).click();
+  await musicPage.waitForURL("**/projects");
+  const dock = musicPage.getByRole("complementary", { name: "Music player", exact: true });
+  await dock.locator(".music-dock-heading strong").waitFor();
+  assert.equal(await dock.getAttribute("data-audio-state"), "playing", "Music and its controls survive client-side route navigation");
+  assert.equal(await musicPage.evaluate(() => window.__forestContexts.length), 1, "Route navigation reuses the active audio context");
+  await dock.getByRole("button", { name: "Previous music track" }).click();
+  await musicPage.locator('.music-dock[data-track="moonlight"][data-audio-state="playing"]').waitFor({ timeout: 20000 });
+  await musicPage.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await musicPage.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, "Phone music player fits the viewport");
+  await dock.screenshot({ path: "artifacts/music-dock-mobile.png" });
+  await dock.getByRole("button", { name: "Minimize music player" }).click();
+  assert.equal(await dock.isVisible(), false, "Music controls can be minimized");
+  assert.equal(await musicPage.evaluate(() => document.activeElement?.id), "music-launcher", "Minimize restores keyboard focus to the launcher");
+  await musicPage.getByRole("button", { name: "Open music player" }).click();
+  await dock.getByRole("button", { name: "Pause music" }).click();
+  await musicPage.reload({ waitUntil: "networkidle" });
+  assert.equal(await musicPage.evaluate(() => window.__forestContexts.length), 0, "Saved preferences never restart music automatically");
+  await musicPage.getByRole("button", { name: "Open music player" }).click();
+  assert.equal(await dock.getAttribute("data-track"), "moonlight", "The selected soundtrack persists after reload");
+  assert.equal(await dock.getByRole("slider", { name: "Music volume" }).inputValue(), "100", "The volume preference persists after reload");
+  await dock.getByRole("button", { name: "Minimize music player" }).click();
+  await musicPage.goto(origin, { waitUntil: "networkidle" });
+  await musicPage.locator("#listening-room").screenshot({ path: "artifacts/listening-room-mobile.png", animations: "disabled" });
+  await musicPage.close();
+  console.log("PASS: native music output, three distinct scores, no autoplay, volume/mute, seeking, pause/resume, playlist, route continuity, preferences, mobile dock, motion controls, field notes and FAQ.");
+
 
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, reducedMotion: "reduce" });
   page.on("pageerror", error => errors.push(error.message));

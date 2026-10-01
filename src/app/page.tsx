@@ -5,6 +5,8 @@ import { ForestJourney } from "@/components/portfolio/ForestJourney";
 import { BotanicalBranch, LeafMark } from "@/components/portfolio/Botanical";
 import { ActionLink, CallToAction, Eyebrow, SourceLink } from "@/components/portfolio/Primitives";
 import { ProjectCard } from "@/components/portfolio/ProjectCard";
+import { FieldNotes, PortfolioQuestions } from "@/components/portfolio/FieldNotes";
+import { ListeningRoom } from "@/components/portfolio/MusicPlayer";
 import { disciplines, person, projects } from "@/data/portfolio";
 
 export default function Home() {
@@ -38,6 +40,9 @@ export default function Home() {
       <div className="discipline-cards">{disciplines.map((discipline, index) => <Link href={"/expertise#" + discipline.number} className="discipline-card" key={discipline.number}><div className="discipline-card-top"><span className="mono">{discipline.number} /</span>{index === 0 ? <Cpu size={29} strokeWidth={1.2} /> : index === 1 ? <Layers size={29} strokeWidth={1.2} /> : <Braces size={29} strokeWidth={1.2} />}</div><h3>{discipline.title}</h3><p>{discipline.text}</p><span className="discipline-card-bottom mono">EXPLORE THIS BRANCH<ArrowUpRight size={19} /></span></Link>)}</div>
     </section>
     <section className="forest-lab-teaser container"><div className="forest-lab-teaser-photo" aria-hidden="true" /><div className="forest-lab-teaser-copy"><Eyebrow><span className="index-number">04 /</span>Take the scenic route</Eyebrow><h2>A small forest.<br /><span className="serif-word">A little wonder.</span></h2><p>Meet the living landscape behind this portfolio. Change the light, stir the leaves, and follow the fireflies.</p><ActionLink href="/playground" primary>Step into the Forest Lab</ActionLink></div><Link href="/playground" className="forest-lab-portal" aria-label="Explore the interactive Forest Lab"><span className="forest-portal-ring"><LeafMark /></span><span className="mono">ENTER THE CLEARING<ArrowUpRight size={22} /></span><div><span><Wind size={14} />Wind</span><span><Sparkles size={14} />Fireflies</span></div></Link></section>
+    <FieldNotes />
+    <ListeningRoom />
+    <PortfolioQuestions />
     <CallToAction />
   </>;
 }

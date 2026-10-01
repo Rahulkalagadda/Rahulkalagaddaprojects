@@ -8,9 +8,10 @@ import { navigation, person, projects } from "@/data/portfolio";
 import { MotionProvider, MotionToggle } from "./MotionProvider";
 import { MotionEngine } from "./MotionEngine";
 import { LeafMark } from "./Botanical";
+import { MusicProvider, MusicLauncher, MusicDock } from "./MusicPlayer";
 
 export function Shell({ children }: { children: React.ReactNode }) {
-  return <MotionProvider><ShellLayout>{children}</ShellLayout></MotionProvider>;
+  return <MotionProvider><MusicProvider><ShellLayout>{children}</ShellLayout></MusicProvider></MotionProvider>;
 }
 
 function ShellLayout({ children }: { children: React.ReactNode }) {
@@ -76,6 +77,7 @@ function ShellLayout({ children }: { children: React.ReactNode }) {
 
   return <>
     <MotionEngine blocked={commandOpen || menuOpen} />
+    <MusicDock blocked={commandOpen || menuOpen} />
     <a href="#main-content" className="skip-link" onClick={() => document.getElementById("main-content")?.focus()}>Skip to content</a>
     <header className="site-header">
       <span className="scroll-progress" aria-hidden="true" />
@@ -85,6 +87,7 @@ function ShellLayout({ children }: { children: React.ReactNode }) {
         <div className="header-actions">
           <button className="icon-button command-trigger" onClick={() => { setQuery(""); setCommandOpen(true); }} aria-label="Search pages and projects" title="Search · Ctrl/⌘ K"><Command size={17} /></button>
           <MotionToggle />
+          <MusicLauncher />
           <button className="icon-button" onClick={toggleTheme} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}</button>
           <Link href="/contact" className="header-contact">Let&apos;s talk<ArrowUpRight size={16} /></Link>
           <button className="icon-button mobile-menu-toggle" aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={22} /> : <Menu size={22} />}</button>

@@ -11,6 +11,7 @@ const revealSelector = [
   ".journey-row", ".expertise-row", ".principles-grid > article", ".pipeline-panel", ".case-meta",
   ".case-story > div", ".architecture-node", ".case-scope > div", ".contact-direct > *",
   ".contact-form-panel", ".education-card", ".next-project", ".cta-content > *",
+  ".field-note", ".listening-panel", ".portfolio-question-intro", ".portfolio-faq",
 ].join(",");
 
 export function MotionEngine({ blocked }: { blocked: boolean }) {
