@@ -76,21 +76,26 @@ try {
   console.log("PREVIEW_JPEG:" + preview.toString("base64"));
 
   await page.waitForFunction(() => document.documentElement.dataset.scrolling === "smooth");
-  // Check interpolation after the forest has left view, isolating the scroller from software WebGL.
-  await page.evaluate(() => window.scrollTo({ top: document.getElementById("selected-work").offsetTop + 200, behavior: "instant" }));
-  await page.waitForTimeout(500);
-  await page.mouse.move(700, 800);
-  await page.mouse.wheel(0, 540);
-  const scrollSamples = await page.evaluate(async () => {
-    const samples = [];
-    for (let i = 0; i < 9; i++) {
-      await new Promise(resolve => requestAnimationFrame(resolve));
-      samples.push(Math.round(window.scrollY));
-    }
-    return samples;
+  // Record in the page from the wheel event itself; protocol latency must not miss the animation.
+  await page.evaluate(() => {
+    window.__wheelSamples = [];
+    window.__wheelSampleDone = false;
+    window.addEventListener("wheel", () => {
+      window.__wheelSamples.push(Math.round(window.scrollY));
+      const capture = () => {
+        window.__wheelSamples.push(Math.round(window.scrollY));
+        if (window.__wheelSamples.length < 16) requestAnimationFrame(capture);
+        else window.__wheelSampleDone = true;
+      };
+      requestAnimationFrame(capture);
+    }, { once: true, passive: true });
   });
+  await page.mouse.move(700, 850);
+  await page.mouse.wheel(0, 540);
+  await page.waitForFunction(() => window.__wheelSampleDone);
+  const scrollSamples = await page.evaluate(() => window.__wheelSamples);
   console.log("SCROLL_SAMPLES:" + JSON.stringify(scrollSamples));
-  assert.ok(new Set(scrollSamples).size > 2, "Wheel scrolling interpolates across frames");
+  assert.ok(new Set(scrollSamples).size > 2, "Wheel scrolling interpolates across frames with the forest active");
   await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 10000 });
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await page.waitForTimeout(500);
