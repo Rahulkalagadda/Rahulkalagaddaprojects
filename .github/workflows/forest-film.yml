@@ -1,0 +1,40 @@
+name: Prepare forest film
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prepare-film:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Download licensed forest footage
+        run: |
+          mkdir -p artifacts
+          curl --fail --location --retry 2 --max-time 90 --output "$RUNNER_TEMP/forest-source.mp4" "https://videos.pexels.com/video-files/10091405/10091405-uhd_3840_2160_30fps.mp4"
+      - name: Encode silent, seekable desktop and phone clips
+        run: |
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; fi
+          ffmpeg -hide_banner -loglevel error -y -ss 2 -i "$RUNNER_TEMP/forest-source.mp4" -t 10 -an -vf "fps=24,scale=1280:-2,format=yuv420p" -c:v libx264 -preset fast -crf 27 -maxrate 2500k -bufsize 5000k -g 6 -keyint_min 6 -sc_threshold 0 -movflags +faststart artifacts/forest-journey.mp4
+          ffmpeg -hide_banner -loglevel error -y -i artifacts/forest-journey.mp4 -an -vf "scale=720:-2" -c:v libx264 -preset fast -crf 29 -maxrate 1000k -bufsize 2000k -g 6 -keyint_min 6 -sc_threshold 0 -movflags +faststart artifacts/forest-journey-mobile.mp4
+          ffmpeg -hide_banner -loglevel error -y -i artifacts/forest-journey.mp4 -frames:v 1 -vf scale=640:-2 artifacts/forest-start.jpg
+          ffmpeg -hide_banner -loglevel error -y -ss 5 -i artifacts/forest-journey.mp4 -frames:v 1 -vf scale=640:-2 artifacts/forest-middle.jpg
+      - name: Export prepared assets for repository update
+        run: |
+          python - <<'PY'
+          import base64, hashlib, json
+          from pathlib import Path
+          for name in ['forest-journey.mp4', 'forest-journey-mobile.mp4']:
+              data = Path('artifacts', name).read_bytes()
+              encoded = base64.b64encode(data).decode()
+              print('FOREST_META:' + json.dumps({'name':name,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'chunks':(len(encoded)+19999)//20000}))
+              for index, offset in enumerate(range(0,len(encoded),20000)):
+                  print('FOREST_ASSET|' + name + '|' + str(index) + '|' + encoded[offset:offset+20000])
+          for name in ['forest-start.jpg','forest-middle.jpg']:
+              print('FOREST_FRAME|' + name + '|' + base64.b64encode(Path('artifacts',name).read_bytes()).decode())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: forest-film
+          path: artifacts/
+          retention-days: 14

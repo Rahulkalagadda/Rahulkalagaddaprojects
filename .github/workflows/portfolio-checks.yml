@@ -1,0 +1,49 @@
+name: Portfolio checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "scripts/**"
+      - "package*.json"
+      - "next.config.mjs"
+      - ".github/workflows/portfolio-checks.yml"
+      - ".eslintrc.json"
+permissions:
+  contents: read
+jobs:
+  build-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install application
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Install isolated browser test tooling
+        run: |
+          npm install --prefix "$RUNNER_TEMP/portfolio-browser" --no-package-lock --no-save playwright@1.51.1
+          node "$RUNNER_TEMP/portfolio-browser/node_modules/playwright/cli.js" install --with-deps chromium
+          if ! command -v google-chrome >/dev/null; then node "$RUNNER_TEMP/portfolio-browser/node_modules/playwright/cli.js" install chrome; fi
+      - name: Verify routes, responsive layout, controls, and contact drafts
+        run: node scripts/browser-checks.mjs
+
+      - name: Upload visual checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: portfolio-visual-checks
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 14
+

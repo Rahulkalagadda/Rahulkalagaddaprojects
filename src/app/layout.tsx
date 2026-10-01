@@ -1,70 +1,32 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Shell } from "@/components/portfolio/Shell";
+import "lenis/dist/lenis.css";
 import "./globals.css";
+import "./forest.css";
+import "./project-story.css";
+import "./forest-music.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
-  display: "swap",
-});
-
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal", "italic"], variable: "--font-cormorant", display: "swap" });
 export const metadata: Metadata = {
-  title: "Rahul Kalagadda — AI Engineer | LLM & RAG Systems",
-  description:
-    "Personal portfolio and engineering case studies of Rahul Kalagadda. AI Engineer specializing in LLM & RAG Systems, deterministic policy engines, and scalable backend infrastructure.",
-  keywords: [
-    "Rahul Kalagadda",
-    "AI Engineer",
-    "LLM Systems",
-    "RAG Architecture",
-    "FastAPI",
-    "Next.js",
-    "Qdrant",
-    "FAISS",
-    "Groq",
-    "Full-Stack AI Products",
-    "Mumbai India AI Engineer",
-  ],
+  title: { default: "Rahul Kalagadda — AI & Software Engineer", template: "%s — Rahul Kalagadda" },
+  description: "Wild Systems: Rahul Kalagadda's forest-inspired portfolio. AI engineering, software engineering, and thoughtful web development, with an interactive realistic 3D forest.",
   authors: [{ name: "Rahul Kalagadda", url: "https://github.com/Rahulkalagadda" }],
   creator: "Rahul Kalagadda",
-  metadataBase: new URL("https://rahulkalagadda.vercel.app"),
+  keywords: ["Rahul Kalagadda", "AI Engineer", "Software Engineer", "Software Developer", "React", "Next.js", "FastAPI", "RAG"],
   openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: "https://rahulkalagadda.vercel.app",
-    title: "Rahul Kalagadda — AI Engineer | LLM & RAG Systems",
-    description:
-      "AI Engineer specializing in LLM & RAG Systems, Backend Engineering, and Full-Stack AI Products.",
-    siteName: "Rahul Kalagadda Portfolio",
+    type: "website", locale: "en_IN", siteName: "Rahul Kalagadda",
+    title: "Rahul Kalagadda — AI & Software Engineer",
+    description: "Ideas take root. Systems come alive. Explore Rahul's engineering projects and a living 3D forest.",
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "Rahul Kalagadda — AI Engineer",
-    description:
-      "AI Engineer specializing in LLM & RAG Systems, Backend Engineering, and Full-Stack AI Products.",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  twitter: { card: "summary", title: "Rahul Kalagadda — AI & Software Engineer", description: "AI systems, full-stack applications, and thoughtful interfaces." },
+  robots: { index: true, follow: true },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="bg-background text-foreground font-sans selection:bg-amber selection:text-background min-h-screen">
-        {children}
-      </body>
-    </html>
-  );
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="en" className={inter.variable + " " + cormorant.variable}>
+    <head><link rel="preload" href="/forest/forest-clearing.webp" as="image" /></head>
+    <body><Shell>{children}</Shell></body>
+  </html>;
 }

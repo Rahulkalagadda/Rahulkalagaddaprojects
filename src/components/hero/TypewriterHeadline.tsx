@@ -48,7 +48,7 @@ export const TypewriterHeadline: React.FC = () => {
 
   return (
     <div className="inline-flex items-center gap-1 text-sm sm:text-base lg:text-lg font-mono text-amber font-semibold min-h-[28px]">
-      <span className="text-foreground/60 mr-1">// focus:</span>
+      <span className="text-foreground/60 mr-1">{"// focus:"}</span>
       <span>{text}</span>
       <span className="w-2 h-4 bg-amber inline-block animate-pulse ml-0.5" />
     </div>
