@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight, Braces, Cpu, Layers, Sparkles, Wind } from "lucide-react";
 import { ForestScene } from "@/components/portfolio/ForestScene";
+import { ForestJourney } from "@/components/portfolio/ForestJourney";
 import { BotanicalBranch, LeafMark } from "@/components/portfolio/Botanical";
 import { ActionLink, CallToAction, Eyebrow, SourceLink } from "@/components/portfolio/Primitives";
 import { ProjectCard } from "@/components/portfolio/ProjectCard";
@@ -8,7 +9,7 @@ import { disciplines, person, projects } from "@/data/portfolio";
 
 export default function Home() {
   return <>
-    <section className="forest-hero">
+    <ForestJourney>
       <ForestScene />
       <div className="forest-hero-shade" aria-hidden="true" />
       <div className="forest-hero-inner container">
@@ -21,8 +22,7 @@ export default function Home() {
         </div>
         <div className="forest-hero-bottom"><div className="role-list">{person.roles.map((role, i) => <span key={role}><i aria-hidden="true">0{i + 1}</i>{role}</span>)}</div><a href="#selected-work" className="scroll-cue"><span>FOLLOW THE TRAIL</span><ArrowDownRight size={23} /></a></div>
       </div>
-      <span className="forest-scene-note mono" aria-hidden="true">A LIVING FOREST · MOVE YOUR CURSOR</span>
-    </section>
+    </ForestJourney>
     <div className="forest-field-strip"><div className="container"><span><LeafMark />Rooted in curiosity</span><span>AI systems</span><i aria-hidden="true">✳</i><span>Full-stack software</span><i aria-hidden="true">✳</i><span>Thoughtful interfaces</span><a href={person.github} target="_blank" rel="noopener noreferrer">OPEN SOURCE<ArrowUpRight size={14} /></a></div></div>
     <section id="selected-work" className="container section-pad forest-selected">
       <div className="section-heading"><div><Eyebrow><span className="index-number">01 /</span>The work, in the wild</Eyebrow><h2>Built to solve.<br /><span className="serif-word">Made to matter.</span></h2></div><div className="section-heading-aside"><p>AI systems, connected applications, and considered interfaces. Six projects, each with its own story.</p><SourceLink /></div></div>

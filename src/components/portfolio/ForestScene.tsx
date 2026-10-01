@@ -45,7 +45,7 @@ export function ForestScene({ variant = "hero", light = "moonlight", wind = 0.8,
       const rendererInfo = gl.getExtension("WEBGL_debug_renderer_info");
       const softwareRenderer = rendererInfo && /swiftshader|llvmpipe|software/i.test(String(gl.getParameter(rendererInfo.UNMASKED_RENDERER_WEBGL)));
       // A software GPU still gets the complete scene, at a smaller render resolution.
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, softwareRenderer ? 0.8 : small ? 1 : 1.25));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, softwareRenderer ? 0.65 : small ? 1 : 1.25));
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.15;
@@ -172,11 +172,11 @@ export function ForestScene({ variant = "hero", light = "moonlight", wind = 0.8,
         mistMaterial.uniforms.time.value = elapsed;
         updateLeaves();
         if (variant === "hero") {
-          const follow = 1 - Math.exp(-dt * 3);
+          const follow = 1 - Math.exp(-dt * 6);
           currentScroll = THREE.MathUtils.lerp(currentScroll, scroll, follow);
-          camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * 0.26, follow);
-          camera.position.y = THREE.MathUtils.lerp(camera.position.y, homePosition.y + pointer.y * 0.13 + currentScroll * 0.25, follow);
-          camera.position.z = THREE.MathUtils.lerp(camera.position.z, homePosition.z - currentScroll * 0.65, follow);
+          camera.position.x = THREE.MathUtils.lerp(camera.position.x, pointer.x * 0.45 + Math.sin(currentScroll * Math.PI) * 0.35, follow);
+          camera.position.y = THREE.MathUtils.lerp(camera.position.y, homePosition.y + pointer.y * 0.18 - currentScroll * 0.3, follow);
+          camera.position.z = THREE.MathUtils.lerp(camera.position.z, homePosition.z - currentScroll * 3.6, follow);
           camera.lookAt(target);
           element.style.setProperty("--forest-scroll", String(currentScroll));
           element.style.setProperty("--forest-pointer-x", `${pointer.x * 7}px`);
@@ -218,7 +218,18 @@ export function ForestScene({ variant = "hero", light = "moonlight", wind = 0.8,
       const sizeObserver = new ResizeObserver(resize); sizeObserver.observe(element);
       const visibility = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; wake(); }, { threshold: 0.01, rootMargin: "-85px 0px 0px 0px" }); visibility.observe(element);
       const onVisibility = () => wake();
-      const onScroll = () => { const rect = element.getBoundingClientRect(); scroll = Math.max(0, Math.min(1, -rect.top / Math.max(rect.height, 1))); };
+      const onScroll = () => {
+        const journey = element.closest<HTMLElement>(".forest-journey");
+        if (journey) {
+          const stage = journey.querySelector<HTMLElement>(".forest-hero");
+          const header = document.querySelector(".site-header")?.getBoundingClientRect().height || 83;
+          const span = Math.max(1, journey.offsetHeight - (stage?.offsetHeight || element.offsetHeight));
+          scroll = options.current.enabled && journey.dataset.journeyMotion === "on" ? Math.max(0, Math.min(1, (header - journey.getBoundingClientRect().top) / span)) : 0;
+        } else {
+          const rect = element.getBoundingClientRect();
+          scroll = Math.max(0, Math.min(1, -rect.top / Math.max(rect.height, 1)));
+        }
+      };
       const onPointer = (event: PointerEvent) => {
         if (variant !== "hero" || event.pointerType === "touch" || !options.current.enabled) return;
         const rect = element.getBoundingClientRect();
@@ -267,7 +278,7 @@ export function ForestScene({ variant = "hero", light = "moonlight", wind = 0.8,
         free(scene); resources.forEach(root => { if (!root.parent) free(root); });
         renderer.dispose(); renderer.forceContextLoss(); canvas.remove();
       };
-      resize(); apply();
+      onScroll(); resize(); apply();
       const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
       const loaded = await Promise.allSettled([loader.loadAsync("/forest/pine.glb"), loader.loadAsync("/forest/fern.glb"), loader.loadAsync("/forest/moss-rock.glb")]);
       if (disposed) { loaded.forEach(result => { if (result.status === "fulfilled") free(result.value.scene); }); return; }
@@ -284,7 +295,7 @@ export function ForestScene({ variant = "hero", light = "moonlight", wind = 0.8,
         const model = result.value.scene;
         resources.add(model);
         const placements = modelIndex === 0
-          ? (variant === "hero" ? [[5.6, 0, 0, 7.5], [-6.5, 0, -0.5, 7.8], [3.6, 0, -5.2, 7], [-4.2, 0, -6.5, 6.5]] : [[-4.9, 0, 0, 7.4], [4.6, 0, -1, 8.2], [-3.7, 0, -4.7, 7.2], [3.3, 0, -5, 6.8], [-0.8, 0, -8, 6.5]])
+          ? (variant === "hero" ? [[5, 0, 2.4, 8.5], [-5.3, 0, 3.2, 8.8], [3.6, 0, -5.2, 7], [-4.2, 0, -6.5, 6.5]] : [[-4.9, 0, 0, 7.4], [4.6, 0, -1, 8.2], [-3.7, 0, -4.7, 7.2], [3.3, 0, -5, 6.8], [-0.8, 0, -8, 6.5]])
           : modelIndex === 1 ? [[-4.4, 0, 3.6, 0.85], [4.1, 0, 3.7, 0.9], [2.4, 0, 2.8, 0.6], [-2.6, 0, 1.8, 0.62], [4.8, 0, -2, 0.8]]
           : [[-3.5, 0, 2.7, 0.5], [3.1, 0, 2.2, 0.55]];
         placements.forEach(([x, y, z, height], i) => {

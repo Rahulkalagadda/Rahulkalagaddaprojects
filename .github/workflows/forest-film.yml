@@ -1,10 +1,6 @@
 name: Prepare forest film
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [main]
-    paths:
-      - ".github/workflows/forest-film.yml"
 permissions:
   contents: read
 jobs:

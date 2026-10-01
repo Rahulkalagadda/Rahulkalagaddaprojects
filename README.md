@@ -27,6 +27,8 @@ Case studies link to Rahul's public repositories. Scope descriptions distinguish
 
 The hero and Forest Lab use self-hosted glTF pine, fern, and moss-rock models, with real PBR textures and foliage alpha. Meshopt reduces the tree and rock downloads; Three.js loads its decoder dynamically. The original forest backdrop is a 269KB WebP. The three models together are about 1.58MB. Asset sources, licenses, changes, and the image prompt are documented in [public/forest/ASSETS.md](public/forest/ASSETS.md) and on `/credits`.
 
+The hero stays in view for a short scroll sequence. Scroll position scrubs a self-hosted, silent forest-path film in both directions. Near trees and foliage move faster than the background as the 3D camera travels 3.6 world units through the scene. The headline moves separately, with a trail progress indicator. The 3.39MB desktop and 1.36MB phone clips have frequent keyframes; reduced-motion, global pause, and Save-Data preferences retain the still backdrop.
+
 Three.js adds multi-depth mist, circular firefly glow, drifting leaves, wind sway, and pointer/scroll camera parallax. The Forest Lab provides moonlight/sunrise lighting, wind strength, fireflies, mist, pause/play, reset, pointer dragging, and keyboard exploration. Arrow keys move the camera; Home resets it.
 
 Scenes initialize near the viewport, cap pixel density and automatic rendering at 30fps, pause automatic frames offscreen or in hidden tabs, and dispose GPU resources on navigation. The photograph remains visible while WebGL loads or when WebGL is unavailable. Mobile keeps native touch scrolling. Device reduced-motion preferences and the global pause stop automatic motion; the Forest Lab can explicitly play its local scene.

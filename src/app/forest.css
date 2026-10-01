@@ -420,3 +420,32 @@ html[data-effects="off"] .discipline-card:hover { transform: none; }
   .page-intro-botanical { display: none; }
   .resume-sheet { background: white; }
 }
+
+/* Scroll is the playhead. Native sticky positioning preserves touch and keyboard scrolling. */
+.forest-journey { --journey-progress: 0; --journey-header: 83px; --journey-height: max(810px,min(920px,calc(100svh - var(--journey-header)))); position: relative; background: #091710; }
+.forest-journey[data-journey-motion="on"] { height: calc(var(--journey-height) + 125svh); }
+.forest-journey .forest-hero-journey { height: var(--journey-height); min-height: 0; }
+.forest-journey[data-journey-motion="on"] .forest-hero-journey { position: sticky; top: var(--journey-header); }
+.forest-journey .forest-hero-inner { min-height: 0; }
+.forest-journey .forest-hero-copy { transform: translate3d(0,calc(var(--journey-progress) * -90px),0) scale(calc(1 - var(--journey-progress) * .055)); transform-origin: left center; opacity: calc(1 - var(--journey-progress) * .18); }
+.forest-journey-film { position: absolute; inset: -3%; width: 106%; height: 106%; object-fit: cover; object-position: 58% center; z-index: -3; pointer-events: none; opacity: 0; filter: brightness(.72) saturate(.72) contrast(1.12); transform: translate3d(0,calc(var(--journey-progress) * 25px),0) scale(calc(1.02 + var(--journey-progress) * .06)); transition: opacity .8s ease; }
+.forest-journey[data-film-state="ready"] .forest-journey-film { opacity: 1; }
+.forest-journey[data-film-state="ready"] .forest-scene-hero .forest-photo { opacity: 0; }
+.forest-journey .forest-scene-hero .forest-photo { transition: opacity .8s ease; transform: translate3d(calc(var(--forest-pointer-x) * -.4),calc(var(--journey-progress) * 65px),0) scale(calc(1.06 + var(--journey-progress) * .18)); }
+.forest-journey .forest-hero-shade { background: linear-gradient(90deg,rgba(3,17,9,.78),rgba(5,25,13,.5) 44%,rgba(8,28,15,.1) 78%),linear-gradient(0deg,rgba(9,23,16,.84),transparent 35%,rgba(9,23,16,.18)); }
+.forest-journey-indicator { position: absolute; right: 32px; top: 50%; z-index: 5; display: flex; align-items: center; gap: 15px; writing-mode: vertical-rl; color: #d8e8c8; font-size: 7px; letter-spacing: .16em; pointer-events: none; }
+.forest-journey-indicator > i { width: 1px; height: 90px; background: rgba(222,242,203,.22); overflow: hidden; }
+.forest-journey-indicator b { display: block; width: 100%; height: 100%; background: #cbef87; transform: scaleY(var(--journey-progress)); transform-origin: top; }
+.forest-journey[data-journey-motion="off"] .forest-journey-indicator { display: none; }
+.forest-journey[data-journey-motion="off"] .forest-journey-film,.forest-journey[data-journey-motion="off"] .forest-photo { transition: none; }
+@media (max-width: 820px) {
+  .forest-journey { --journey-height: max(740px,calc(100svh - var(--journey-header))); }
+  .forest-journey[data-journey-motion="on"] { height: calc(var(--journey-height) + 90svh); }
+  .forest-journey .forest-hero-copy { transform: translate3d(0,calc(var(--journey-progress) * -45px),0) scale(calc(1 - var(--journey-progress) * .035)); }
+  .forest-journey-indicator { display: none; }
+  .forest-journey-film { object-position: 54% center; }
+  .forest-journey .forest-hero-shade { background: linear-gradient(0deg,rgba(7,22,13,.93),rgba(6,22,13,.48) 45%,rgba(6,22,13,.55) 72%,rgba(6,22,13,.2)),linear-gradient(90deg,rgba(3,16,9,.35),transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .forest-journey-film,.forest-journey .forest-scene-hero .forest-photo { transition: none; }
+}

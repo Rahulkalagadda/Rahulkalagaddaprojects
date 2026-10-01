@@ -163,10 +163,6 @@ export function MotionEngine({ blocked }: { blocked: boolean }) {
             tweens.set(element, tween);
           });
 
-          const heroCopy = main.querySelector(".forest-hero-copy");
-          if (heroCopy && window.matchMedia("(min-width: 821px)").matches) {
-            gsap.to(heroCopy, { y: -32, ease: "none", scrollTrigger: { trigger: ".forest-hero", start: "top top", end: "bottom top", scrub: 0.8 } });
-          }
           const forestPhoto = main.querySelector(".forest-story-photo");
           if (forestPhoto) gsap.fromTo(forestPhoto, { y: -20 }, { y: 20, ease: "none", scrollTrigger: { trigger: ".forest-story-image", start: "top bottom", end: "bottom top", scrub: 0.9 } });
           const initials = main.querySelector(".initials-sculpture");
