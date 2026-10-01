@@ -82,7 +82,17 @@ export function ForestScene({ variant = "hero", light = "moonlight", wind = 0.8,
       scene.add(hemisphere, moon, rim);
       const trees: { object: InstanceType<typeof THREE.Group>; phase: number; lean: number }[] = [];
       const resources = new Set<InstanceType<typeof THREE.Object3D>>();
-      const ground = new THREE.Mesh(new THREE.CircleGeometry(11, 48), new THREE.MeshStandardMaterial({ color: 0x122d19, roughness: 1, transparent: true, opacity: variant === "hero" ? 0.24 : 0.7, depthWrite: false }));
+      // Feather the ground into the photographed forest floor instead of leaving a hard horizon.
+      const groundMaskData = new Uint8Array(64 * 64 * 4);
+      for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+        const distance = Math.hypot(x / 63 - 0.5, y / 63 - 0.5);
+        const alpha = Math.round(THREE.MathUtils.smoothstep(0.5 - distance, 0, 0.14) * 255);
+        groundMaskData.set([255, alpha, 255, 255], (y * 64 + x) * 4);
+      }
+      const groundMask = new THREE.DataTexture(groundMaskData, 64, 64, THREE.RGBAFormat);
+      groundMask.needsUpdate = true;
+      groundMask.magFilter = groundMask.minFilter = THREE.LinearFilter;
+      const ground = new THREE.Mesh(new THREE.CircleGeometry(11, 48), new THREE.MeshStandardMaterial({ color: 0x102615, roughness: 1, transparent: true, opacity: variant === "hero" ? 0.14 : 0.28, alphaMap: groundMask, depthWrite: false }));
       ground.rotation.x = -Math.PI / 2;
       ground.position.set(0, -0.035, -1);
       scene.add(ground); resources.add(ground);
@@ -206,7 +216,7 @@ export function ForestScene({ variant = "hero", light = "moonlight", wind = 0.8,
         camera.aspect = width / height; camera.updateProjectionMatrix(); wake();
       };
       const sizeObserver = new ResizeObserver(resize); sizeObserver.observe(element);
-      const visibility = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; wake(); }, { threshold: 0.01 }); visibility.observe(element);
+      const visibility = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; wake(); }, { threshold: 0.01, rootMargin: "-85px 0px 0px 0px" }); visibility.observe(element);
       const onVisibility = () => wake();
       const onScroll = () => { const rect = element.getBoundingClientRect(); scroll = Math.max(0, Math.min(1, -rect.top / Math.max(rect.height, 1))); };
       const onPointer = (event: PointerEvent) => {

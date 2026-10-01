@@ -53,7 +53,7 @@ export function MotionEngine({ blocked }: { blocked: boolean }) {
         const lenis = new LenisClass({
           lerp: 0.085, smoothWheel: true, syncTouch: false, autoRaf: false,
           respectReducedMotion: true, stopInertiaOnNavigate: true,
-          anchors: true,
+          anchors: false,
           prevent: node => node.hasAttribute("data-lenis-prevent"),
         });
         scroller.current = lenis;
@@ -73,6 +73,25 @@ export function MotionEngine({ blocked }: { blocked: boolean }) {
         lenis.on("scroll", onScroll);
         gsap.ticker.add(tick);
         gsap.ticker.lagSmoothing(0);
+        const onAnchorClick = (event: MouseEvent) => {
+          if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
+          if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+          const url = new URL(link.href, window.location.href);
+          if (url.origin !== window.location.origin || url.pathname !== window.location.pathname || !url.hash) return;
+          let target: HTMLElement | null;
+          try { target = document.getElementById(decodeURIComponent(url.hash.slice(1))); } catch { return; }
+          if (!target) return;
+          event.preventDefault();
+          lenis.scrollTo(target, { onComplete: () => {
+            if (window.location.hash !== url.hash) window.history.pushState(window.history.state, "", url.hash);
+            const temporaryFocus = !target.hasAttribute("tabindex") && !target.matches("a[href],button,input,select,textarea");
+            if (temporaryFocus) target.setAttribute("tabindex", "-1");
+            target.focus({ preventScroll: true });
+            if (temporaryFocus) target.addEventListener("blur", () => target.removeAttribute("tabindex"), { once: true });
+          } });
+        };
+        document.addEventListener("click", onAnchorClick);
         const tweens = new Map<HTMLElement, gsap.core.Tween>();
         const pointerCleanups: (() => void)[] = [];
         let refreshFrame = 0;
@@ -175,6 +194,7 @@ export function MotionEngine({ blocked }: { blocked: boolean }) {
         document.fonts.ready.then(() => { if (!cancelled) refresh(); });
         cleanup = () => {
           mutation.disconnect(); resize.disconnect();
+          document.removeEventListener("click", onAnchorClick);
           if (refreshFrame) cancelAnimationFrame(refreshFrame);
           main.removeEventListener("focusin", onFocus);
           pointerCleanups.forEach(remove => remove());
