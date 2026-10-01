@@ -51,6 +51,10 @@ try {
     assert.equal(await page.locator("main h1").count(), 1, "One page heading: " + route);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     assert.equal(overflow, false, "Desktop horizontal overflow: " + route);
+    if (["/about", "/projects", "/expertise", "/contact", "/projects/sevasetu-ai"].includes(route)) {
+      await revealPageForCapture(page);
+      await page.screenshot({ path: "artifacts/" + route.slice(1).replaceAll("/", "-") + "-desktop.png", fullPage: true });
+    }
   }
   const missing = await page.goto(origin + "/projects/unknown-project", { waitUntil: "networkidle" });
   assert.equal(missing.status(), 404, "Unknown case study should return 404");
@@ -60,9 +64,11 @@ try {
   await page.mouse.move(1200, 500);
   await page.waitForTimeout(500);
   const heroParallaxAfter = await page.locator('[data-scene-variant="hero"] canvas').screenshot();
+  const firstPointer = await page.locator(".forest-scene-hero").evaluate(el => el.style.getPropertyValue("--forest-pointer-x"));
   await page.mouse.move(300, 200);
   await page.waitForTimeout(500);
   assert.ok(!heroParallaxAfter.equals(await page.locator('[data-scene-variant="hero"] canvas').screenshot()), "Forest camera and foliage react to pointer motion");
+  assert.notEqual(firstPointer, await page.locator(".forest-scene-hero").evaluate(el => el.style.getPropertyValue("--forest-pointer-x")), "Pointer input changes the forest parallax position");
   await revealPageForCapture(page);
   await page.screenshot({ path: "artifacts/home-desktop.png", fullPage: true });
   const preview = await page.screenshot({ type: "jpeg", quality: 50 });
@@ -70,7 +76,10 @@ try {
   console.log("PREVIEW_JPEG:" + preview.toString("base64"));
 
   await page.waitForFunction(() => document.documentElement.dataset.scrolling === "smooth");
-  await page.mouse.move(700, 940);
+  // Check interpolation after the forest has left view, isolating the scroller from software WebGL.
+  await page.evaluate(() => window.scrollTo({ top: document.getElementById("selected-work").offsetTop + 200, behavior: "instant" }));
+  await page.waitForTimeout(500);
+  await page.mouse.move(700, 800);
   await page.mouse.wheel(0, 540);
   const scrollSamples = await page.evaluate(async () => {
     const samples = [];
@@ -80,7 +89,11 @@ try {
     }
     return samples;
   });
+  console.log("SCROLL_SAMPLES:" + JSON.stringify(scrollSamples));
   assert.ok(new Set(scrollSamples).size > 2, "Wheel scrolling interpolates across frames");
+  await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 10000 });
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.waitForTimeout(500);
   await page.locator(".scroll-cue").click();
   await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 10000 });
   const anchor = await page.locator("#selected-work").evaluate(element => ({ top: element.getBoundingClientRect().top, scrollY: window.scrollY, padding: getComputedStyle(document.documentElement).scrollPaddingTop, classes: document.documentElement.className }));

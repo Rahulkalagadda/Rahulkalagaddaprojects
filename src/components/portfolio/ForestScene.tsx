@@ -86,6 +86,7 @@ export function ForestScene({ variant = "hero", light = "moonlight", wind = 0.8,
       let visible = true;
       let lostContext = false;
       let previousTime = 0;
+      let lastRenderTime = 0;
       let elapsed = 0;
       let scroll = 0;
       let currentScroll = 0;
@@ -167,7 +168,8 @@ export function ForestScene({ variant = "hero", light = "moonlight", wind = 0.8,
           element.style.setProperty("--forest-pointer-x", `${pointer.x * 7}px`);
           element.style.setProperty("--forest-pointer-y", `${pointer.y * 5}px`);
         }
-        render();
+        // Bound GPU work so page scrolling keeps its own animation budget.
+        if (time - lastRenderTime >= 1000 / 30) { render(); lastRenderTime = time; }
         frame = requestAnimationFrame(tick);
       };
       const wake = () => {

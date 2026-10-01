@@ -3,7 +3,7 @@
 The three glTF assets are CC0. They are self-hosted; the portfolio does not call the Poly Haven API.
 
 - `pine.glb`: [Pine Sapling Small, Poly Haven](https://polyhaven.com/a/pine_sapling_small). Rico Cilliers (modeling), Rob Tuytel (photography). GLB conversion from [Papyszoo/CC0-Public-Domain-Models](https://github.com/Papyszoo/CC0-Public-Domain-Models/tree/main/packs/polyhaven-nature-plants/models/pine_sapling_small). Added the original twig alpha map, simplified geometry, resized textures to 512px, encoded WebP, and applied Meshopt compression.
-- `fern.glb`: [Fern 02, Poly Haven](https://polyhaven.com/a/fern_02). Rico Cilliers (modeling), Rob Tuytel (scanning). Packed the original 1K glTF with the original PNG diffuse/alpha, normal, and ARM textures; resized textures to 512px and encoded WebP.
+- `fern.glb`: [Fern 02, Poly Haven](https://polyhaven.com/a/fern_02). Rico Cilliers (modeling), Rob Tuytel (scanning). Packed the original 1K glTF with the original diffuse, separate alpha, normal, and ARM textures; merged the alpha into the diffuse, resized textures to 512px, and encoded WebP.
 - `moss-rock.glb`: [Rock Moss Set 01, Poly Haven](https://polyhaven.com/a/rock_moss_set_01). GLB conversion from [Papyszoo/CC0-Public-Domain-Models](https://github.com/Papyszoo/CC0-Public-Domain-Models/tree/main/packs/polyhaven-nature-rocks/models/rock_moss_set_01). Simplified geometry, resized textures to 512px, encoded WebP, and applied Meshopt compression.
 
 [Poly Haven license](https://polyhaven.com/license) · [CC0 legal text](https://creativecommons.org/publicdomain/zero/1.0/)

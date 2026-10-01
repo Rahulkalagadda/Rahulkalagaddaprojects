@@ -173,10 +173,10 @@ h2 { font-size: clamp(39px,4.15vw,60px); letter-spacing: -.055em; line-height: 1
 .intro-aside { color: var(--muted); }
 .about-identity-card { background: linear-gradient(0deg,rgba(12,36,19,.92),rgba(12,36,19,.3)),url('/forest/forest-clearing.webp') 75% center/cover; border: 1px solid #44623b; color: #f0efdf; border-radius: 130px 130px 10px 10px; }
 .about-identity-card .eyebrow { color: #d6e2c9; }
-.identity-initials { font-family: var(--font-cormorant),Georgia,serif; font-size: 245px; font-style: italic; font-weight: 400; color: #dfedca; }
+.identity-initials { font-family: var(--font-cormorant),Georgia,serif; font-size: 245px; font-style: italic; font-weight: 400; color: #dfedca; text-shadow: 4px 7px 0 #284b2c,12px 19px 25px rgba(1,13,4,.45); }
 .identity-initials span { color: #cbef87; }
 .identity-caption { color: #eaf1df; }
-.about-identity-card > .mono { color: #c2d4b1; }
+.about-identity-card > .mono { color: #c2d4b1; border-color: #68884b; }
 .journey-number { font-family: var(--font-cormorant),Georgia,serif; color: var(--border-hover); }
 .education-card { border-radius: 6px 45px 6px 6px; }
 .expertise-row .expertise-icon { color: var(--blue); }

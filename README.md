@@ -29,7 +29,7 @@ The hero and Forest Lab use self-hosted glTF pine, fern, and moss-rock models, w
 
 Three.js adds multi-depth mist, circular firefly glow, drifting leaves, wind sway, and pointer/scroll camera parallax. The Forest Lab provides moonlight/sunrise lighting, wind strength, fireflies, mist, pause/play, reset, pointer dragging, and keyboard exploration. Arrow keys move the camera; Home resets it.
 
-Scenes initialize near the viewport, cap pixel density, pause automatic frames offscreen or in hidden tabs, and dispose GPU resources on navigation. The photograph remains visible while WebGL loads or when WebGL is unavailable. Mobile keeps native touch scrolling. Device reduced-motion preferences and the global pause stop automatic motion; the Forest Lab can explicitly play its local scene.
+Scenes initialize near the viewport, cap pixel density and automatic rendering at 30fps, pause automatic frames offscreen or in hidden tabs, and dispose GPU resources on navigation. The photograph remains visible while WebGL loads or when WebGL is unavailable. Mobile keeps native touch scrolling. Device reduced-motion preferences and the global pause stop automatic motion; the Forest Lab can explicitly play its local scene.
 
 Lenis smooths wheel scrolling; GSAP coordinates reveals, project-card tilt, magnetic button icons, and gentle parallax. Anchor links respect the sticky header. Search dialogs use native scrolling. Content remains available when the animation libraries cannot load.
 
