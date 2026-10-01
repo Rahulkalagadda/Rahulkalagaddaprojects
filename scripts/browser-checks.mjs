@@ -250,7 +250,7 @@ try {
   });
   await fallbackPage.goto(origin + "/playground", { waitUntil: "networkidle" });
   await fallbackPage.locator('[data-scene-state="fallback"]').waitFor({ timeout: 45000 });
-  assert.equal(await fallbackPage.getByRole("status").isVisible(), true, "WebGL fallback keeps a readable forest and explanation");
+  assert.equal(await fallbackPage.locator(".forest-fallback[role='status']").isVisible(), true, "WebGL fallback keeps a readable forest and explanation");
   await fallbackPage.screenshot({ path: "artifacts/forest-fallback.png", fullPage: true });
   await fallbackPage.close();
   assert.deepEqual(errors, [], "No uncaught browser errors");
