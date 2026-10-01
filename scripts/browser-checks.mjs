@@ -14,6 +14,7 @@ server.stdout.on("data", chunk => { serverOutput += chunk.toString(); });
 server.stderr.on("data", chunk => { serverOutput += chunk.toString(); });
 let browser;
 const errors = [];
+const failures = [];
 async function revealPageForCapture(page) {
   const { total, step } = await page.evaluate(() => ({ total: document.documentElement.scrollHeight - window.innerHeight, step: window.innerHeight * 0.68 }));
   for (let top = 0; top < total; top += step) {
@@ -74,13 +75,11 @@ try {
   });
   assert.ok(new Set(scrollSamples).size > 2, "Wheel scrolling interpolates across frames");
   await page.locator(".scroll-cue").click();
-  await page.waitForFunction(() => {
-    const top = document.getElementById("selected-work").getBoundingClientRect().top;
-    return top >= 80 && top <= 140;
-  }, undefined, { timeout: 10000 });
-  await page.waitForTimeout(500);
-  const anchorTop = await page.locator("#selected-work").evaluate(element => element.getBoundingClientRect().top);
-  assert.ok(anchorTop >= 80 && anchorTop <= 140, "Anchor retains the sticky-header offset after scrolling settles");
+  await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 10000 });
+  const anchor = await page.locator("#selected-work").evaluate(element => ({ top: element.getBoundingClientRect().top, scrollY: window.scrollY, padding: getComputedStyle(document.documentElement).scrollPaddingTop, classes: document.documentElement.className }));
+  console.log("ANCHOR_GEOMETRY:" + JSON.stringify(anchor));
+  await page.screenshot({ path: "artifacts/anchor-settled.png" });
+  if (anchor.top < 80 || anchor.top > 140) failures.push("Anchor retains the sticky-header offset after scrolling settles: " + anchor.top);
   await page.getByRole("button", { name: "Pause visual effects", exact: true }).click();
   await page.waitForFunction(() => document.documentElement.dataset.effects === "off" && document.documentElement.dataset.scrolling === "native");
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -196,6 +195,7 @@ try {
   await page.locator('[data-scene-state="ready"]').waitFor({ timeout: 45000 });
   await page.screenshot({ path: "artifacts/playground-mobile.png", fullPage: true });
   assert.deepEqual(errors, [], "No uncaught browser errors");
+  assert.deepEqual(failures, [], "Motion behavior checks");
   console.log("PASS: 13 routes, 404, desktop/mobile overflow, command search, filters, contact encoding, theme persistence, rendered 3D controls and new geometry/materials, smooth wheel/anchors, global motion pause, reduced motion.");
 } finally {
   await browser?.close();
