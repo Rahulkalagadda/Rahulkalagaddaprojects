@@ -37,7 +37,7 @@ try {
   }
   assert.ok(started, "Production server failed to start: " + serverOutput);
   browser = await chromium.launch({ headless: true, args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, reducedMotion: "reduce" });
   page.on("pageerror", error => errors.push(error.message));
   const routes = [
     "/", "/projects", "/about", "/expertise", "/playground", "/contact", "/resume", "/credits",
@@ -58,6 +58,7 @@ try {
   }
   const missing = await page.goto(origin + "/projects/unknown-project", { waitUntil: "networkidle" });
   assert.equal(missing.status(), 404, "Unknown case study should return 404");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto(origin, { waitUntil: "networkidle" });
   await page.locator('[data-scene-variant="hero"][data-scene-state="ready"]').waitFor({ timeout: 45000 });
   assert.equal(await page.locator('[data-scene-variant="hero"]').getAttribute("data-models-loaded"), "3", "All hero foliage models load");
@@ -102,7 +103,16 @@ try {
   assert.ok(new Set(scrollSamples).size > 2, "Wheel scrolling interpolates across frames with the forest active");
   await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 30000 });
   await page.locator(".scroll-cue").click();
-  await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 30000 });
+  try {
+    await page.waitForFunction(() => {
+      const top = document.getElementById("selected-work").getBoundingClientRect().top;
+      if (Math.abs(top - 110) > 2) { window.__anchorStableSince = 0; return false; }
+      if (!window.__anchorStableSince) window.__anchorStableSince = performance.now();
+      return performance.now() - window.__anchorStableSince > 300;
+    }, undefined, { timeout: 30000 });
+  } catch {
+    failures.push("Trail anchor did not settle at the header offset");
+  }
   const anchor = await page.locator("#selected-work").evaluate(element => ({ top: element.getBoundingClientRect().top, scrollY: window.scrollY, padding: getComputedStyle(document.documentElement).scrollPaddingTop, classes: document.documentElement.className }));
   console.log("ANCHOR_GEOMETRY:" + JSON.stringify(anchor));
   await page.screenshot({ path: "artifacts/anchor-settled.png" });

@@ -416,6 +416,7 @@ html[data-effects="off"] .discipline-card:hover { transform: none; }
   .forest-portal-ring,.forest-portal-ring svg,.discipline-card { transition: none; }
 }
 @media print {
+  :root, :root[data-theme="light"] { --background: #fff; --surface: #fff; --surface-subtle: #fff; --foreground: #111; --muted: #333; --muted-dark: #444; --border: #ccc; --blue: #222; --blue-hover: #222; }
   .page-intro-botanical { display: none; }
   .resume-sheet { background: white; }
 }
