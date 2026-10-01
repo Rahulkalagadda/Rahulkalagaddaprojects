@@ -94,6 +94,7 @@ h2 { font-size: clamp(39px,4.15vw,60px); letter-spacing: -.055em; line-height: 1
 .forest-hero .role-list i { color: #93a683; font-family: var(--font-inter),sans-serif; font-size: 8px; }
 .forest-hero .scroll-cue { color: #e3e9d7; font-family: var(--font-inter),sans-serif; letter-spacing: .16em; font-size: 8px; }
 .forest-hero .scroll-cue svg { color: #cbef87; }
+.forest-hero .scroll-cue > span { display: block; }
 .forest-scene-note { position: absolute; right: 32px; top: 50%; writing-mode: vertical-rl; color: #bdcbae; font-size: 7px; opacity: .7; letter-spacing: .17em; }
 .forest-field-strip { border-block: 1px solid var(--border); background: var(--surface-subtle); }
 .forest-field-strip .container { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding-block: 25px; }
@@ -313,7 +314,7 @@ h2 { font-size: clamp(39px,4.15vw,60px); letter-spacing: -.055em; line-height: 1
   .forest-control-note { grid-column: 1/-1; margin-top: 0; }
   .credits-grid { grid-template-columns: 1fr; }
   .page-intro { padding-top: 65px; padding-bottom: 55px; }
-  .page-intro-botanical { width: 150px; right: -14px; }
+  .page-intro-botanical { width: 150px; right: 40px; }
   .footer-bottom > div { gap: 20px; }
 }
 @media (max-width: 600px) {
@@ -383,7 +384,7 @@ h2 { font-size: clamp(39px,4.15vw,60px); letter-spacing: -.055em; line-height: 1
   .footer-name { font-size: 31px; }
   .page-intro { padding-top: 49px; padding-bottom: 44px; }
   .page-intro h1 { font-size: 59px; }
-  .page-intro-botanical { width: 135px; top: 11px; right: -17px; }
+  .page-intro-botanical { width: 135px; top: 11px; right: 48px; }
   .about-identity-card { border-radius: 150px 150px 9px 9px; }
   .contact-form-panel { border-radius: 10px 50px 10px 10px; }
   .forest-lab-stage { min-height: 460px; }

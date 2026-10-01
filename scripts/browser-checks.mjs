@@ -101,8 +101,6 @@ try {
   console.log("SCROLL_FRAME_TIMES:" + JSON.stringify(await page.evaluate(() => window.__wheelFrameTimes)));
   assert.ok(new Set(scrollSamples).size > 2, "Wheel scrolling interpolates across frames with the forest active");
   await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 30000 });
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-  await page.waitForTimeout(500);
   await page.locator(".scroll-cue").click();
   await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 30000 });
   const anchor = await page.locator("#selected-work").evaluate(element => ({ top: element.getBoundingClientRect().top, scrollY: window.scrollY, padding: getComputedStyle(document.documentElement).scrollPaddingTop, classes: document.documentElement.className }));
@@ -211,7 +209,13 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const route of routes) {
     await page.goto(origin + route, { waitUntil: "networkidle" });
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), false, "Mobile horizontal overflow: " + route);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    if (overflow) {
+      const suspects = await page.evaluate(() => Array.from(document.querySelectorAll("main *")).map(el => ({ tag: el.tagName, class: String(el.className), right: el.getBoundingClientRect().right, left: el.getBoundingClientRect().left })).filter(el => el.right > window.innerWidth + 1 || el.left < -1).slice(0, 15));
+      console.log("MOBILE_OVERFLOW:" + JSON.stringify({ route, suspects }));
+      await page.screenshot({ path: "artifacts/overflow-" + route.replaceAll("/", "-") + ".png", fullPage: true });
+      failures.push("Mobile horizontal overflow: " + route);
+    }
   }
   await page.goto(origin, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Open navigation" }).click();
