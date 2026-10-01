@@ -5,8 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Command, Github, Linkedin, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { navigation, person, projects } from "@/data/portfolio";
+import { MotionProvider, MotionToggle } from "./MotionProvider";
+import { MotionEngine } from "./MotionEngine";
 
 export function Shell({ children }: { children: React.ReactNode }) {
+  return <MotionProvider><ShellLayout>{children}</ShellLayout></MotionProvider>;
+}
+
+function ShellLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
@@ -67,13 +73,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
   ].filter(item => (item.label + " " + item.subtitle).toLowerCase().includes(query.toLowerCase()));
 
   return <>
-    <a href="#main-content" className="skip-link">Skip to content</a>
+    <MotionEngine blocked={commandOpen || menuOpen} />
+    <a href="#main-content" className="skip-link" onClick={() => document.getElementById("main-content")?.focus()}>Skip to content</a>
     <header className="site-header">
+      <span className="scroll-progress" aria-hidden="true" />
       <div className="container header-inner">
         <Link href="/" className="brand" aria-label="Rahul Kalagadda — home"><span className="brand-monogram">r<span>k</span><i /></span><span className="brand-caption">RAHUL<br />KALAGADDA</span></Link>
         <nav className="desktop-nav" aria-label="Main navigation">{navigation.slice(0, 5).map(item => <Link key={item.href} href={item.href} className={isActive(item.href) ? "nav-link active" : "nav-link"} aria-current={isActive(item.href) ? "page" : undefined}>{item.label}</Link>)}</nav>
         <div className="header-actions">
           <button className="icon-button command-trigger" onClick={() => { setQuery(""); setCommandOpen(true); }} aria-label="Search pages and projects" title="Search · Ctrl/⌘ K"><Command size={17} /></button>
+          <MotionToggle />
           <button className="icon-button" onClick={toggleTheme} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}</button>
           <Link href="/contact" className="header-contact">Let&apos;s talk<ArrowUpRight size={16} /></Link>
           <button className="icon-button mobile-menu-toggle" aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} aria-controls="mobile-navigation" onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={22} /> : <Menu size={22} />}</button>
@@ -86,10 +95,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <div className="footer-top"><Link href="/" className="footer-name">Rahul Kalagadda<span className="blue-dot">.</span></Link><p>Intelligence. Engineering.<br />A little imagination.</p><div className="footer-social"><a href={person.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub"><Github size={19} /></a><a href={person.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><Linkedin size={19} /></a><a href={"mailto:" + person.email} aria-label="Email Rahul"><ArrowUpRight size={22} /></a></div></div>
       <div className="footer-bottom mono"><span>© {new Date().getFullYear()} Rahul Kalagadda</span><span>Built with curiosity. Made to explore.</span><Link href="/resume">Résumé<ArrowUpRight size={13} /></Link></div>
     </footer>
-    <dialog ref={dialog} className="command-dialog" onCancel={() => setCommandOpen(false)} onClose={() => setCommandOpen(false)} onClick={event => { if (event.target === event.currentTarget) setCommandOpen(false); }} aria-labelledby="command-title">
+    <dialog ref={dialog} data-lenis-prevent className="command-dialog" onCancel={() => setCommandOpen(false)} onClose={() => setCommandOpen(false)} onClick={event => { if (event.target === event.currentTarget) setCommandOpen(false); }} aria-labelledby="command-title">
       <div className="command-top"><Search size={20} /><label id="command-title" className="sr-only" htmlFor="command-query">Search pages and projects</label><input id="command-query" ref={input} value={query} onChange={event => setQuery(event.target.value)} placeholder="Where would you like to go?" autoComplete="off" /><button className="icon-button" onClick={() => setCommandOpen(false)} aria-label="Close search"><X size={19} /></button></div>
       <div className="command-results">{commands.length ? commands.map(item => <Link href={item.href} key={item.href} onClick={() => setCommandOpen(false)}><span><strong>{item.label}</strong><small>{item.subtitle}</small></span><ArrowUpRight size={17} /></Link>) : <p className="empty-search">No results. Try “AI”, “projects”, or “contact”.</p>}</div>
       <p className="command-hint mono">Tab to move · Enter to open · Esc to close</p>
     </dialog>
   </>;
 }
+

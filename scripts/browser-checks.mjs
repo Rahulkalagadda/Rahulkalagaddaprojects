@@ -43,11 +43,39 @@ try {
   const missing = await page.goto(origin + "/projects/unknown-project", { waitUntil: "networkidle" });
   assert.equal(missing.status(), 404, "Unknown case study should return 404");
   await page.goto(origin, { waitUntil: "networkidle" });
-  await page.locator('[data-scene-state="ready"]').waitFor({ timeout: 45000 });
+  await page.locator('[data-scene-variant="hero"][data-scene-state="ready"]').waitFor({ timeout: 45000 });
   await page.screenshot({ path: "artifacts/home-desktop.png", fullPage: true });
   const preview = await page.screenshot({ type: "jpeg", quality: 50 });
   await writeFile("artifacts/home-preview.jpg", preview);
   console.log("PREVIEW_JPEG:" + preview.toString("base64"));
+
+  await page.waitForFunction(() => document.documentElement.dataset.scrolling === "smooth");
+  await page.mouse.move(700, 940);
+  await page.mouse.wheel(0, 540);
+  const scrollSamples = await page.evaluate(async () => {
+    const samples = [];
+    for (let i = 0; i < 9; i++) {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      samples.push(Math.round(window.scrollY));
+    }
+    return samples;
+  });
+  assert.ok(new Set(scrollSamples).size > 2, "Wheel scrolling interpolates across frames");
+  await page.locator(".scroll-cue").click();
+  await page.waitForFunction(() => {
+    const top = document.getElementById("selected-work").getBoundingClientRect().top;
+    return top >= 80 && top <= 140;
+  }, undefined, { timeout: 10000 });
+  await page.getByRole("button", { name: "Pause visual effects", exact: true }).click();
+  await page.waitForFunction(() => document.documentElement.dataset.effects === "off" && document.documentElement.dataset.scrolling === "native");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const stillHero = await page.locator('[data-scene-variant="hero"] canvas').screenshot();
+  await page.waitForTimeout(200);
+  assert.ok(stillHero.equals(await page.locator('[data-scene-variant="hero"] canvas').screenshot()), "Global pause stops automatic hero motion");
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForFunction(() => document.documentElement.dataset.effects === "off");
+  await page.getByRole("button", { name: "Enable visual effects", exact: true }).click();
+  await page.waitForFunction(() => document.documentElement.dataset.scrolling === "smooth");
 
   await page.getByRole("button", { name: "Search pages and projects", exact: true }).click();
   await page.getByRole("textbox", { name: "Search pages and projects" }).fill("Voice AI");
@@ -83,6 +111,11 @@ try {
   await page.keyboard.press("ArrowRight");
   const rotated = await canvas.screenshot();
   assert.ok(!orbit.equals(rotated), "Keyboard rotation changes rendered pixels");
+  await page.getByRole("button", { name: "Helix", exact: true }).click();
+  const helix = await canvas.screenshot();
+  assert.ok(!rotated.equals(helix), "Helix changes the rendered geometry");
+  await page.getByRole("button", { name: "Iridescent", exact: true }).click();
+  assert.ok(!helix.equals(await canvas.screenshot()), "Iridescence changes rendered material");
   await page.getByRole("button", { name: "Reset sculpture and controls" }).click();
   assert.equal(await page.getByRole("button", { name: "Knot", exact: true }).getAttribute("aria-pressed"), "true");
   assert.equal(await page.getByRole("button", { name: "Chrome", exact: true }).getAttribute("aria-pressed"), "true");
@@ -92,6 +125,8 @@ try {
   await page.goto(origin + "/playground", { waitUntil: "networkidle" });
   await page.locator('[data-scene-state="ready"]').waitFor({ timeout: 45000 });
   assert.equal(await page.getByRole("button", { name: "Play motion", exact: true }).count(), 1, "Reduced motion starts paused");
+  assert.equal(await page.locator("html").getAttribute("data-scrolling"), "native", "Reduced motion uses native scrolling");
+  await page.screenshot({ path: "artifacts/playground-reduced.png", fullPage: true });
   const stillOne = await page.locator(".scene-host canvas").screenshot();
   await page.waitForTimeout(300);
   const stillTwo = await page.locator(".scene-host canvas").screenshot();
@@ -132,10 +167,13 @@ try {
   assert.ok(page.url().endsWith("/about"), "Mobile navigation changes page");
   assert.equal(await page.locator("#mobile-navigation").count(), 0, "Mobile navigation closes");
   await page.goto(origin, { waitUntil: "networkidle" });
-  await page.locator('[data-scene-state="ready"]').waitFor({ timeout: 45000 });
+  await page.locator('[data-scene-variant="hero"][data-scene-state="ready"]').waitFor({ timeout: 45000 });
   await page.screenshot({ path: "artifacts/home-mobile.png", fullPage: true });
+  await page.goto(origin + "/playground", { waitUntil: "networkidle" });
+  await page.locator('[data-scene-state="ready"]').waitFor({ timeout: 45000 });
+  await page.screenshot({ path: "artifacts/playground-mobile.png", fullPage: true });
   assert.deepEqual(errors, [], "No uncaught browser errors");
-  console.log("PASS: 13 routes, 404, desktop/mobile overflow, command search, filters, contact encoding, theme persistence, rendered 3D controls, reduced motion.");
+  console.log("PASS: 13 routes, 404, desktop/mobile overflow, command search, filters, contact encoding, theme persistence, rendered 3D controls and new geometry/materials, smooth wheel/anchors, global motion pause, reduced motion.");
 } finally {
   await browser?.close();
   server.kill("SIGTERM");

@@ -16,9 +16,9 @@ export default function Home() {
           <div className="action-row"><ActionLink href="/projects" primary>Explore my work</ActionLink><ActionLink href="/about">Meet the engineer</ActionLink></div>
         </div>
         <div className="hero-sculpture">
-          <span className="hero-orbit orbit-a" aria-hidden="true" /><span className="hero-orbit orbit-b" aria-hidden="true" />
+          <span className="hero-orbit orbit-a" aria-hidden="true" />
           <span className="object-label mono">FIG. 01 / IDEAS IN MOTION</span>
-          <Scene />
+          <Scene variant="hero" />
           <span className="sculpture-note mono"><span className="tiny-cross">+</span>DRAG TO EXPLORE</span>
           <span className="sculpture-coordinate mono" aria-hidden="true">X 0.24<br />Y 1.08<br />Z ∞</span>
         </div>
@@ -39,7 +39,8 @@ export default function Home() {
       <div className="section-heading"><div><Eyebrow><span className="index-number">03</span>What I bring to the table</Eyebrow><h2>Different disciplines.<br /><span className="serif-word">One connected view.</span></h2></div><ActionLink href="/expertise">Explore my expertise</ActionLink></div>
       <div className="discipline-cards">{disciplines.map((discipline, index) => <Link href={"/expertise#" + discipline.number} className="discipline-card" key={discipline.number}><div className="discipline-card-top"><span className="mono">{discipline.number}</span>{index === 0 ? <Cpu size={29} strokeWidth={1.2} /> : index === 1 ? <Layers size={29} strokeWidth={1.2} /> : <Braces size={29} strokeWidth={1.2} />}</div><h3>{discipline.title}</h3><p>{discipline.text}</p><span className="discipline-card-bottom mono">EXPLORE<ArrowUpRight size={19} /></span></Link>)}</div>
     </section>
-    <section className="container playground-teaser"><div><Eyebrow><span className="index-number">04</span>A little room to play</Eyebrow><h2>Curiosity looks good<br /><span className="serif-word">in three dimensions.</span></h2><p>Step into the playground. Change the geometry, explore the materials, and make the sculpture your own.</p><ActionLink href="/playground" primary>Enter the playground</ActionLink></div><Link href="/playground" className="teaser-object" aria-label="Open the interactive 3D playground"><span /><span /><span /><i /><b className="teaser-arrow"><ArrowUpRight size={27} /></b></Link></section>
+    <section className="container playground-teaser"><div><Eyebrow><span className="index-number">04</span>A little room to play</Eyebrow><h2>Curiosity looks good<br /><span className="serif-word">in three dimensions.</span></h2><p>Step into the playground. Change the geometry, explore the materials, and make the sculpture your own.</p><ActionLink href="/playground" primary>Enter the playground</ActionLink></div><Link href="/playground" className="teaser-object" aria-label="Open the interactive 3D playground"><Scene variant="preview" shape="orbit" finish="cobalt" speed={0.65} interactive={false} /><b className="teaser-arrow"><ArrowUpRight size={27} /></b></Link></section>
     <CallToAction />
   </>;
 }
+

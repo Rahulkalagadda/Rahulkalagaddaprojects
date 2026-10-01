@@ -19,7 +19,7 @@ Requires Node.js 22 and npm. Run `npm ci`, then `npm run dev`.
 
 Run `npm run lint` and `npm run build` for production checks. Use `npm start` to serve the production build.
 
-The dependency set and lockfile are preserved from the existing Next.js application. No application dependencies were added.
+The existing Next.js, Three.js, and GSAP dependencies are preserved. Lenis 1.3.26 is added for smooth wheel scrolling; the npm lockfile records the dependency.
 
 ## Editing the portfolio
 
@@ -46,3 +46,12 @@ The form opens an encoded mailto draft. It does not send or store submissions. V
 The browser checks cover all 13 content routes, a missing case-study 404, desktop and mobile overflow, project filtering and search, command navigation, theme persistence, encoded contact drafts, rendered geometry/material/keyboard changes, and reduced-motion behavior. Screenshots are uploaded as a workflow artifact.
 
 To run browser checks locally, install Playwright separately, install its Chromium browser, and set `PLAYWRIGHT_PATH` to its absolute `index.mjs` path before running `npm run check:browser`.
+
+
+## Kinetic studio motion
+
+Lenis smooths wheel scrolling while touch remains native. GSAP ScrollTrigger coordinates section reveals, project-card depth, magnetic button icons, and gentle parallax. Native scrolling and visible content remain the baseline. Anchor links account for the sticky header; the command dialog keeps its own native scroll.
+
+Three.js now provides scroll/pointer-responsive chrome in the hero and a real cobalt orbital sculpture in the playground teaser. Scenes initialize near the viewport, pause offscreen or in hidden tabs, cap pixel density, and dispose resources on route changes. The playground includes helix geometry and a physical iridescent finish.
+
+The header's visual-effects control pauses motion and saves the preference locally. Operating-system reduced motion disables smoothing, reveals, parallax, and automatic sculpture rotation. Visitors can explicitly play the studio sculpture. The résumé retains native scrolling and print-friendly content.

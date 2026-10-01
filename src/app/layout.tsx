@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Shell } from "@/components/portfolio/Shell";
+import "lenis/dist/lenis.css";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
@@ -25,3 +26,4 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <body><Shell>{children}</Shell></body>
   </html>;
 }
+
