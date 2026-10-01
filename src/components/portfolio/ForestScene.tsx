@@ -106,7 +106,13 @@ export function ForestScene({ variant = "hero", light = "moonlight", wind = 0.8,
       let currentScroll = 0;
       let currentReset = options.current.resetKey;
       const pointer = { x: 0, y: 0 };
-      const render = () => { if (!disposed && !lostContext) renderer.render(scene, camera); };
+      let renderedFrames = 0;
+      const render = () => {
+        if (!disposed && !lostContext) {
+          renderer.render(scene, camera);
+          canvas.dataset.renderCount = String(++renderedFrames);
+        }
+      };
       const canAnimate = () => !disposed && !lostContext && visible && !document.hidden && options.current.running && (options.current.enabled || options.current.userMotion);
 
       // A soft circular glow, rather than square point sprites, gives the fireflies their light.

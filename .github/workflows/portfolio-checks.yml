@@ -34,6 +34,7 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/portfolio-browser" --no-package-lock --no-save playwright@1.51.1
           node "$RUNNER_TEMP/portfolio-browser/node_modules/playwright/cli.js" install --with-deps chromium
+          if ! command -v google-chrome >/dev/null; then node "$RUNNER_TEMP/portfolio-browser/node_modules/playwright/cli.js" install chrome; fi
       - name: Verify routes, responsive layout, controls, and contact drafts
         run: node scripts/browser-checks.mjs
 

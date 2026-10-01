@@ -13,6 +13,7 @@ let serverOutput = "";
 server.stdout.on("data", chunk => { serverOutput += chunk.toString(); });
 server.stderr.on("data", chunk => { serverOutput += chunk.toString(); });
 let browser;
+let mediaBrowser;
 const errors = [];
 const failures = [];
 async function revealPageForCapture(page) {
@@ -37,6 +38,93 @@ try {
   }
   assert.ok(started, "Production server failed to start: " + serverOutput);
   browser = await chromium.launch({ headless: true, args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+  // Isolate the film from GPU speed: test decoded video frames, native pinning, and reverse scrubbing.
+  mediaBrowser = await chromium.launch({ channel: "chrome", headless: true, args: ["--disable-gpu"] });
+  const disableWebGL = () => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function(type, ...args) {
+      if (String(type).startsWith("webgl") || type === "experimental-webgl") return null;
+      return original.call(this, type, ...args);
+    };
+  };
+  const filmPage = await mediaBrowser.newPage({ viewport: { width: 1280, height: 900 } });
+  filmPage.on("pageerror", error => errors.push(error.message));
+  await filmPage.addInitScript(disableWebGL);
+  await filmPage.goto(origin, { waitUntil: "networkidle" });
+  console.log("FILM_DIAGNOSTICS:" + JSON.stringify(await filmPage.locator("video").evaluate(v => ({ source:v.currentSrc, ready:v.readyState, error:v.error?.message, codec:v.canPlayType('video/mp4; codecs="avc1.42E01E"'), state:v.closest(".forest-journey").dataset.filmState }))));
+  await filmPage.locator('.forest-journey[data-film-state="ready"]').waitFor({ timeout: 20000 });
+  const film = filmPage.locator(".forest-journey-film");
+  assert.ok((await film.getAttribute("src")).endsWith("/forest-journey.mp4"), "Desktop gets the desktop film");
+  assert.equal(await film.evaluate(v => v.paused && !v.autoplay), true, "Film never autoplays or loops");
+  const hashFrame = async targetPage => targetPage.evaluate(() => {
+    const v = document.querySelector(".forest-journey-film");
+    const c = document.createElement("canvas"); c.width = 64; c.height = 36;
+    const ctx = c.getContext("2d"); ctx.drawImage(v, 0, 0, 64, 36);
+    return Array.from(ctx.getImageData(0, 0, 64, 36).data).reduce((hash, value) => Math.imul(hash ^ value, 16777619) >>> 0, 2166136261);
+  });
+  const seekByScroll = async (targetPage, progress) => {
+    await targetPage.evaluate(progress => {
+      const root = document.querySelector(".forest-journey");
+      const stage = root.querySelector(".forest-hero");
+      const header = document.querySelector(".site-header").getBoundingClientRect().height;
+      const start = window.scrollY + root.getBoundingClientRect().top - header;
+      window.scrollTo({ top: start + (root.offsetHeight - stage.offsetHeight) * progress, behavior: "instant" });
+    }, progress);
+    await targetPage.waitForFunction(progress => {
+      const v = document.querySelector(".forest-journey-film");
+      const root = document.querySelector(".forest-journey");
+      return !v.seeking && Math.abs(Number(root.dataset.journeyProgress) - progress) < .02 && Math.abs(v.currentTime - progress * (v.duration - 1 / 24)) < .15;
+    }, progress, { timeout: 10000 });
+  };
+  const opening = await hashFrame(filmPage);
+  await seekByScroll(filmPage, .55);
+  const middle = await hashFrame(filmPage);
+  assert.notEqual(opening, middle, "Scrolling changes actual decoded forest frames");
+  const pinned = await filmPage.locator(".forest-hero").evaluate(el => el.getBoundingClientRect().top);
+  const header = await filmPage.locator(".site-header").evaluate(el => el.getBoundingClientRect().height);
+  assert.ok(Math.abs(pinned - header) < 2, "Hero stays pinned below the header");
+  const stoppedTime = await film.evaluate(v => v.currentTime);
+  await filmPage.waitForTimeout(400);
+  assert.equal(await film.evaluate(v => v.currentTime), stoppedTime, "Film holds its exact frame when scrolling stops");
+  await filmPage.screenshot({ path: "artifacts/hero-film-middle.png" });
+  await seekByScroll(filmPage, .15);
+  assert.ok(await film.evaluate(v => v.currentTime) < stoppedTime, "Scrolling backwards reverses the film");
+  await seekByScroll(filmPage, .55);
+  assert.equal(await hashFrame(filmPage), middle, "Revisiting the same scroll position returns the same film frame");
+  await filmPage.getByRole("button", { name: "Pause visual effects", exact: true }).click();
+  await filmPage.waitForFunction(() => document.querySelector(".forest-journey").dataset.journeyMotion === "off");
+  assert.equal(await film.getAttribute("src"), null, "Global pause cancels video loading and restores the still forest");
+  await filmPage.close();
+
+  const phoneFilm = await mediaBrowser.newPage({ viewport: { width: 390, height: 844 } });
+  phoneFilm.on("pageerror", error => errors.push(error.message));
+  await phoneFilm.addInitScript(disableWebGL);
+  await phoneFilm.goto(origin, { waitUntil: "networkidle" });
+  await phoneFilm.locator('.forest-journey[data-film-state="ready"]').waitFor({ timeout: 20000 });
+  assert.ok((await phoneFilm.locator("video").getAttribute("src")).endsWith("/forest-journey-mobile.mp4"), "Phone gets the smaller film");
+  const phoneStart = await hashFrame(phoneFilm);
+  await seekByScroll(phoneFilm, .6);
+  assert.notEqual(await hashFrame(phoneFilm), phoneStart, "Phone scroll changes decoded forest frames");
+  assert.equal(await phoneFilm.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, "Pinned phone hero fits the viewport");
+  await phoneFilm.screenshot({ path: "artifacts/hero-film-phone.png" });
+  await phoneFilm.emulateMedia({ reducedMotion: "reduce" });
+  await phoneFilm.waitForFunction(() => document.querySelector(".forest-journey").dataset.journeyMotion === "off");
+  assert.equal(await phoneFilm.locator("video").getAttribute("src"), null, "Reduced motion removes the film source");
+  assert.equal(await phoneFilm.locator(".forest-hero").evaluate(el => getComputedStyle(el).position), "relative", "Reduced motion keeps normal page scrolling");
+  await phoneFilm.close();
+
+  const failedFilm = await mediaBrowser.newPage({ viewport: { width: 390, height: 844 } });
+  failedFilm.on("pageerror", error => errors.push(error.message));
+  await failedFilm.addInitScript(disableWebGL);
+  await failedFilm.route("**/forest/forest-journey*.mp4", route => route.abort());
+  await failedFilm.goto(origin, { waitUntil: "networkidle" });
+  await failedFilm.locator('.forest-journey[data-film-state="fallback"]').waitFor({ timeout: 15000 });
+  assert.equal(await failedFilm.locator(".forest-photo").evaluate(el => Number(getComputedStyle(el).opacity)), 1, "Failed film retains the original forest image");
+  assert.equal(await failedFilm.getByRole("link", { name: "Explore my work", exact: true }).isVisible(), true, "Hero remains usable when film and WebGL are unavailable");
+  await failedFilm.close();
+  console.log("PASS: scroll-driven forest film, decoded frames, reverse scrubbing, sticky hero, idle frame hold, phone film, global pause, reduced motion, failed-video fallback.");
+
+
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, reducedMotion: "reduce" });
   page.on("pageerror", error => errors.push(error.message));
   const routes = [
@@ -124,10 +212,12 @@ try {
   // Let the offscreen scene's visibility callback and canvas compositing settle.
   await page.waitForTimeout(400);
   const heroCanvas = page.locator('[data-scene-variant="hero"] canvas');
-  const stillHero = await heroCanvas.screenshot({ path: "artifacts/hero-paused-before.png" });
+  await heroCanvas.screenshot({ path: "artifacts/hero-paused-before.png" });
+  const pausedRenderCount = await heroCanvas.getAttribute("data-render-count");
   await page.waitForTimeout(300);
-  const stillHeroAfter = await heroCanvas.screenshot({ path: "artifacts/hero-paused-after.png" });
-  assert.ok(stillHero.equals(stillHeroAfter), "Global pause stops automatic hero motion");
+  await heroCanvas.screenshot({ path: "artifacts/hero-paused-after.png" });
+  assert.equal(await heroCanvas.getAttribute("data-render-count"), pausedRenderCount, "Global pause stops automatic hero rendering");
+  console.log("PAUSED_HERO_RENDER_COUNT:" + pausedRenderCount);
   await page.reload({ waitUntil: "networkidle" });
   await page.waitForFunction(() => document.documentElement.dataset.effects === "off");
   await page.getByRole("button", { name: "Enable visual effects", exact: true }).click();
@@ -188,10 +278,11 @@ try {
   assert.equal(await page.getByRole("button", { name: "Play motion", exact: true }).count(), 1, "Reduced motion starts paused");
   assert.equal(await page.locator("html").getAttribute("data-scrolling"), "native", "Reduced motion uses native scrolling");
   await page.screenshot({ path: "artifacts/playground-reduced.png", fullPage: true });
-  const stillOne = await page.locator(".forest-scene-lab canvas").screenshot();
+  await page.locator(".forest-scene-lab canvas").screenshot();
+  const reducedRenderCount = await page.locator(".forest-scene-lab canvas").getAttribute("data-render-count");
   await page.waitForTimeout(300);
-  const stillTwo = await page.locator(".forest-scene-lab canvas").screenshot();
-  assert.ok(stillOne.equals(stillTwo), "Reduced-motion forest remains still");
+  await page.locator(".forest-scene-lab canvas").screenshot();
+  assert.equal(await page.locator(".forest-scene-lab canvas").getAttribute("data-render-count"), reducedRenderCount, "Reduced motion stops automatic forest rendering");
   await page.emulateMedia({ reducedMotion: "no-preference" });
 
   await page.goto(origin + "/contact", { waitUntil: "networkidle" });
@@ -254,94 +345,12 @@ try {
   await fallbackPage.screenshot({ path: "artifacts/forest-fallback.png", fullPage: true });
   await fallbackPage.close();
 
-  // Isolate the film from GPU speed: test decoded video frames, native pinning, and reverse scrubbing.
-  const disableWebGL = () => {
-    const original = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = function(type, ...args) {
-      if (String(type).startsWith("webgl") || type === "experimental-webgl") return null;
-      return original.call(this, type, ...args);
-    };
-  };
-  const filmPage = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  filmPage.on("pageerror", error => errors.push(error.message));
-  await filmPage.addInitScript(disableWebGL);
-  await filmPage.goto(origin, { waitUntil: "networkidle" });
-  await filmPage.locator('.forest-journey[data-film-state="ready"]').waitFor({ timeout: 20000 });
-  const film = filmPage.locator(".forest-journey-film");
-  assert.ok((await film.getAttribute("src")).endsWith("/forest-journey.mp4"), "Desktop gets the desktop film");
-  assert.equal(await film.evaluate(v => v.paused && !v.autoplay), true, "Film never autoplays or loops");
-  const hashFrame = async targetPage => targetPage.evaluate(() => {
-    const v = document.querySelector(".forest-journey-film");
-    const c = document.createElement("canvas"); c.width = 64; c.height = 36;
-    const ctx = c.getContext("2d"); ctx.drawImage(v, 0, 0, 64, 36);
-    return Array.from(ctx.getImageData(0, 0, 64, 36).data).reduce((hash, value) => Math.imul(hash ^ value, 16777619) >>> 0, 2166136261);
-  });
-  const seekByScroll = async (targetPage, progress) => {
-    await targetPage.evaluate(progress => {
-      const root = document.querySelector(".forest-journey");
-      const stage = root.querySelector(".forest-hero");
-      const header = document.querySelector(".site-header").getBoundingClientRect().height;
-      const start = window.scrollY + root.getBoundingClientRect().top - header;
-      window.scrollTo({ top: start + (root.offsetHeight - stage.offsetHeight) * progress, behavior: "instant" });
-    }, progress);
-    await targetPage.waitForFunction(progress => {
-      const v = document.querySelector(".forest-journey-film");
-      const root = document.querySelector(".forest-journey");
-      return !v.seeking && Math.abs(Number(root.dataset.journeyProgress) - progress) < .02 && Math.abs(v.currentTime - progress * (v.duration - 1 / 24)) < .15;
-    }, progress, { timeout: 10000 });
-  };
-  const opening = await hashFrame(filmPage);
-  await seekByScroll(filmPage, .55);
-  const middle = await hashFrame(filmPage);
-  assert.notEqual(opening, middle, "Scrolling changes actual decoded forest frames");
-  const pinned = await filmPage.locator(".forest-hero").evaluate(el => el.getBoundingClientRect().top);
-  const header = await filmPage.locator(".site-header").evaluate(el => el.getBoundingClientRect().height);
-  assert.ok(Math.abs(pinned - header) < 2, "Hero stays pinned below the header");
-  const stoppedTime = await film.evaluate(v => v.currentTime);
-  await filmPage.waitForTimeout(400);
-  assert.equal(await film.evaluate(v => v.currentTime), stoppedTime, "Film holds its exact frame when scrolling stops");
-  await filmPage.screenshot({ path: "artifacts/hero-film-middle.png" });
-  await seekByScroll(filmPage, .15);
-  assert.ok(await film.evaluate(v => v.currentTime) < stoppedTime, "Scrolling backwards reverses the film");
-  await seekByScroll(filmPage, .55);
-  assert.equal(await hashFrame(filmPage), middle, "Revisiting the same scroll position returns the same film frame");
-  await filmPage.getByRole("button", { name: "Pause visual effects", exact: true }).click();
-  await filmPage.waitForFunction(() => document.querySelector(".forest-journey").dataset.journeyMotion === "off");
-  assert.equal(await film.getAttribute("src"), null, "Global pause cancels video loading and restores the still forest");
-  await filmPage.close();
-
-  const phoneFilm = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  phoneFilm.on("pageerror", error => errors.push(error.message));
-  await phoneFilm.addInitScript(disableWebGL);
-  await phoneFilm.goto(origin, { waitUntil: "networkidle" });
-  await phoneFilm.locator('.forest-journey[data-film-state="ready"]').waitFor({ timeout: 20000 });
-  assert.ok((await phoneFilm.locator("video").getAttribute("src")).endsWith("/forest-journey-mobile.mp4"), "Phone gets the smaller film");
-  const phoneStart = await hashFrame(phoneFilm);
-  await seekByScroll(phoneFilm, .6);
-  assert.notEqual(await hashFrame(phoneFilm), phoneStart, "Phone scroll changes decoded forest frames");
-  assert.equal(await phoneFilm.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, "Pinned phone hero fits the viewport");
-  await phoneFilm.screenshot({ path: "artifacts/hero-film-phone.png" });
-  await phoneFilm.emulateMedia({ reducedMotion: "reduce" });
-  await phoneFilm.waitForFunction(() => document.querySelector(".forest-journey").dataset.journeyMotion === "off");
-  assert.equal(await phoneFilm.locator("video").getAttribute("src"), null, "Reduced motion removes the film source");
-  assert.equal(await phoneFilm.locator(".forest-hero").evaluate(el => getComputedStyle(el).position), "relative", "Reduced motion keeps normal page scrolling");
-  await phoneFilm.close();
-
-  const failedFilm = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  failedFilm.on("pageerror", error => errors.push(error.message));
-  await failedFilm.addInitScript(disableWebGL);
-  await failedFilm.route("**/forest/forest-journey*.mp4", route => route.abort());
-  await failedFilm.goto(origin, { waitUntil: "networkidle" });
-  await failedFilm.locator('.forest-journey[data-film-state="fallback"]').waitFor({ timeout: 15000 });
-  assert.equal(await failedFilm.locator(".forest-photo").evaluate(el => Number(getComputedStyle(el).opacity)), 1, "Failed film retains the original forest image");
-  assert.equal(await failedFilm.getByRole("link", { name: "Explore my work", exact: true }).isVisible(), true, "Hero remains usable when film and WebGL are unavailable");
-  await failedFilm.close();
-  console.log("PASS: scroll-driven forest film, decoded frames, reverse scrubbing, sticky hero, idle frame hold, phone film, global pause, reduced motion, failed-video fallback.");
 
   assert.deepEqual(errors, [], "No uncaught browser errors");
   assert.deepEqual(failures, [], "Motion behavior checks");
   console.log("PASS: 14 routes, 404, desktop/mobile overflow, command search, filters, contact encoding, theme persistence, three real foliage models, rendered forest lighting/fireflies/mist/keyboard controls, smooth wheel/anchors, global motion pause, reduced motion, WebGL fallback.");
 } finally {
+  await mediaBrowser?.close();
   await browser?.close();
   server.kill("SIGTERM");
 }
