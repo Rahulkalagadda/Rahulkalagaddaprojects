@@ -195,7 +195,7 @@ export function Scene({
         const height = Math.max(element.clientHeight, 1);
         renderer.setSize(width, height);
         camera.aspect = width / height;
-        camera.position.z = camera.aspect < 0.8 ? 8.2 : variant === "hero" ? 7.3 : 7;
+        camera.position.z = camera.aspect < 1 ? 8 / camera.aspect : variant === "hero" ? 7.3 : 7;
         camera.updateProjectionMatrix();
         const hero = element.closest<HTMLElement>(".hero");
         if (hero) {

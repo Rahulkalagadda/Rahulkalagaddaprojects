@@ -14,6 +14,17 @@ server.stdout.on("data", chunk => { serverOutput += chunk.toString(); });
 server.stderr.on("data", chunk => { serverOutput += chunk.toString(); });
 let browser;
 const errors = [];
+async function revealPageForCapture(page) {
+  const { total, step } = await page.evaluate(() => ({ total: document.documentElement.scrollHeight - window.innerHeight, step: window.innerHeight * 0.68 }));
+  for (let top = 0; top < total; top += step) {
+    await page.evaluate(top => window.scrollTo({ top, behavior: "instant" }), top);
+    await page.waitForTimeout(120);
+  }
+  await page.evaluate(top => window.scrollTo({ top, behavior: "instant" }), total);
+  await page.waitForTimeout(1000);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.waitForTimeout(1000);
+}
 await mkdir("artifacts", { recursive: true });
 try {
   let started = false;
@@ -44,6 +55,7 @@ try {
   assert.equal(missing.status(), 404, "Unknown case study should return 404");
   await page.goto(origin, { waitUntil: "networkidle" });
   await page.locator('[data-scene-variant="hero"][data-scene-state="ready"]').waitFor({ timeout: 45000 });
+  await revealPageForCapture(page);
   await page.screenshot({ path: "artifacts/home-desktop.png", fullPage: true });
   const preview = await page.screenshot({ type: "jpeg", quality: 50 });
   await writeFile("artifacts/home-preview.jpg", preview);
@@ -124,6 +136,8 @@ try {
   await page.getByRole("button", { name: "Reset sculpture and controls" }).click();
   assert.equal(await page.getByRole("button", { name: "Knot", exact: true }).getAttribute("aria-pressed"), "true");
   assert.equal(await page.getByRole("button", { name: "Chrome", exact: true }).getAttribute("aria-pressed"), "true");
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.waitForTimeout(1000);
   await page.screenshot({ path: "artifacts/playground-desktop.png", fullPage: true });
 
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -173,6 +187,7 @@ try {
   assert.equal(await page.locator("#mobile-navigation").count(), 0, "Mobile navigation closes");
   await page.goto(origin, { waitUntil: "networkidle" });
   await page.locator('[data-scene-variant="hero"][data-scene-state="ready"]').waitFor({ timeout: 45000 });
+  await revealPageForCapture(page);
   await page.screenshot({ path: "artifacts/home-mobile.png", fullPage: true });
   await page.goto(origin + "/playground", { waitUntil: "networkidle" });
   await page.locator('[data-scene-state="ready"]').waitFor({ timeout: 45000 });
