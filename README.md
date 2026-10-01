@@ -1,57 +1,44 @@
-# Rahul Kalagadda — Portfolio
+# Rahul Kalagadda — Wild Systems
 
-An editorial 3D portfolio for AI engineering, software engineering, and software development. Charcoal, cobalt, chrome, and spacious typography carry the same design through every page.
+A forest-inspired portfolio for AI engineering, software engineering, and software development. A photorealistic clearing, real textured 3D foliage, ivory editorial typography, and lime details connect every page.
+
+## Run
+
+```sh
+npm ci
+npm run dev
+```
+
+```sh
+npm run lint
+npm run build
+npm start
+```
+
+Next.js 14, React 18, TypeScript, Three.js, GSAP, and Lenis. No application secrets or provider accounts are required to run the portfolio.
 
 ## Pages
 
-- Home — interactive chrome sculpture, selected work, and engineering disciplines.
-- Projects — searchable, filterable collection of six source-linked projects.
-- Project case studies — challenge, approach, implementation, architecture, and clear scope.
-- About — profile, experience, approach, and education.
-- Expertise — skills connected to projects and an illustrative AI request walkthrough.
-- Playground — Three.js geometry, material, speed, drag, keyboard, pause, and reset controls.
-- Contact — direct links and a form that prepares a mail-client draft.
-- Résumé — printable version, Markdown download, and clipboard copy.
+Home, Projects, About, Expertise, Forest Lab, Contact, Résumé, Credits, and six individual project case studies. Project filters, technology search, a command palette, mobile navigation, light/dark themes, and a persistent motion pause are included.
 
-## Development
+Case studies link to Rahul's public repositories. Scope descriptions distinguish working application code from integration prototypes; no measured business outcomes or model accuracy claims are invented. Project artwork is labeled as original interface concepts.
 
-Requires Node.js 22 and npm. Run `npm ci`, then `npm run dev`.
+## The living forest
 
-Run `npm run lint` and `npm run build` for production checks. Use `npm start` to serve the production build.
+The hero and Forest Lab use self-hosted glTF pine, fern, and moss-rock models, with real PBR textures and foliage alpha. Meshopt reduces the tree and rock downloads; Three.js loads its decoder dynamically. The original forest backdrop is a 269KB WebP. The three models together are about 1.58MB. Asset sources, licenses, changes, and the image prompt are documented in [public/forest/ASSETS.md](public/forest/ASSETS.md) and on `/credits`.
 
-The existing Next.js, Three.js, and GSAP dependencies are preserved. Lenis 1.3.26 is added for smooth wheel scrolling; the npm lockfile records the dependency.
+Three.js adds multi-depth mist, circular firefly glow, drifting leaves, wind sway, and pointer/scroll camera parallax. The Forest Lab provides moonlight/sunrise lighting, wind strength, fireflies, mist, pause/play, reset, pointer dragging, and keyboard exploration. Arrow keys move the camera; Home resets it.
 
-## Editing the portfolio
+Scenes initialize near the viewport, cap pixel density, pause automatic frames offscreen or in hidden tabs, and dispose GPU resources on navigation. The photograph remains visible while WebGL loads or when WebGL is unavailable. Mobile keeps native touch scrolling. Device reduced-motion preferences and the global pause stop automatic motion; the Forest Lab can explicitly play its local scene.
 
-Profile, navigation, projects, disciplines, and experience live in `src/data/portfolio.ts`. Project routes are generated from that collection. New interface illustrations can be added to `src/components/portfolio/ProjectVisual.tsx`.
+Lenis smooths wheel scrolling; GSAP coordinates reveals, project-card tilt, magnetic button icons, and gentle parallax. Anchor links respect the sticky header. Search dialogs use native scrolling. Content remains available when the animation libraries cannot load.
 
-Project artwork is original conceptual illustration, not a screenshot of a deployed application. Public repository links are provided in every case study. Prototypes are labeled as prototypes; unverified commercial metrics and clinical claims are omitted.
+## Contact and résumé
 
-## 3D and accessibility
+The contact form validates fields and prepares an encoded `mailto:` draft. It does not claim to send or store messages. Direct email, GitHub, and LinkedIn links remain available. The résumé can be printed/saved as PDF through the browser, downloaded as Markdown, or copied.
 
-The sculpture loads Three.js on the client. Chrome uses an environment map and physical material. Geometry and material controls update the existing renderer. Offscreen tabs and hidden scenes stop automatic frames; resources are disposed when the scene unmounts.
+## Verification and hosting
 
-Reduced motion starts automatic rotation paused. The playground can explicitly play motion. Drag or arrow keys rotate the object; Home resets the view. A static orbital illustration appears when WebGL is unavailable.
+`npm run lint` and `npm run build` validate the implementation. `.github/workflows/portfolio-checks.yml` installs isolated Playwright tooling on GitHub Actions and runs `scripts/browser-checks.mjs` against a production server. It verifies all 14 pages, a 404, desktop/mobile overflow, navigation/search, filters, contact encoding, theme persistence, all three loaded models, rendered light/fireflies/mist/camera controls, smooth scrolling/anchors, motion pause, reduced motion, and a WebGL fallback. Screenshots are uploaded as workflow artifacts.
 
-The shell includes a mobile menu, persistent light/dark themes, a skip link, a native modal command palette, visible keyboard focus, and print styles. Use Ctrl/⌘ K to search pages and project case studies.
-
-## Contact behavior
-
-The form opens an encoded mailto draft. It does not send or store submissions. Visitors review and send the message in their email application, with a copyable draft as a fallback. No email service or secret keys are required.
-
-## Automated verification
-
-`.github/workflows/portfolio-checks.yml` runs npm ci, lint, a production build, and isolated Playwright browser checks on pull requests. Browser tooling is installed into the runner's temporary directory and does not change the application lockfile.
-
-The browser checks cover all 13 content routes, a missing case-study 404, desktop and mobile overflow, project filtering and search, command navigation, theme persistence, encoded contact drafts, rendered geometry/material/keyboard changes, and reduced-motion behavior. Screenshots are uploaded as a workflow artifact.
-
-To run browser checks locally, install Playwright separately, install its Chromium browser, and set `PLAYWRIGHT_PATH` to its absolute `index.mjs` path before running `npm run check:browser`.
-
-
-## Kinetic studio motion
-
-Lenis smooths wheel scrolling while touch remains native. GSAP ScrollTrigger coordinates section reveals, project-card depth, magnetic button icons, and gentle parallax. Native scrolling and visible content remain the baseline. Anchor links account for the sticky header; the command dialog keeps its own native scroll.
-
-Three.js now provides scroll/pointer-responsive chrome in the hero and a real cobalt orbital sculpture in the playground teaser. Scenes initialize near the viewport, pause offscreen or in hidden tabs, cap pixel density, and dispose resources on route changes. The playground includes helix geometry and a physical iridescent finish.
-
-The header's visual-effects control pauses motion and saves the preference locally. Operating-system reduced motion disables smoothing, reveals, parallax, and automatic sculpture rotation. Visitors can explicitly play the studio sculpture. The résumé retains native scrolling and print-friendly content.
+Vercel builds a preview from the pull request through the repository's existing integration. Deployment protection may require the project owner's Vercel login. This branch does not change deployment protection or production settings.

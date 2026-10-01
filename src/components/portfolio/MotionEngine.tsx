@@ -6,7 +6,7 @@ import type Lenis from "lenis";
 import { useMotionSettings } from "./MotionProvider";
 
 const revealSelector = [
-  ".hero-top", ".hero-copy > *", ".hero-bottom", ".section-heading > *", ".project-card",
+  ".forest-hero-top", ".forest-hero-copy > *", ".forest-hero-bottom", ".forest-story-copy > *", ".section-heading > *", ".project-card",
   ".about-preview-copy > *", ".discipline-card", ".page-intro > .eyebrow", ".intro-grid > *",
   ".journey-row", ".expertise-row", ".principles-grid > article", ".pipeline-panel", ".case-meta",
   ".case-story > div", ".architecture-node", ".case-scope > div", ".contact-direct > *",
@@ -134,10 +134,12 @@ export function MotionEngine({ blocked }: { blocked: boolean }) {
             tweens.set(element, tween);
           });
 
-          const heroCopy = main.querySelector(".hero-copy");
+          const heroCopy = main.querySelector(".forest-hero-copy");
           if (heroCopy && window.matchMedia("(min-width: 821px)").matches) {
-            gsap.to(heroCopy, { y: -32, ease: "none", scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 0.8 } });
+            gsap.to(heroCopy, { y: -32, ease: "none", scrollTrigger: { trigger: ".forest-hero", start: "top top", end: "bottom top", scrub: 0.8 } });
           }
+          const forestPhoto = main.querySelector(".forest-story-photo");
+          if (forestPhoto) gsap.fromTo(forestPhoto, { y: -20 }, { y: 20, ease: "none", scrollTrigger: { trigger: ".forest-story-image", start: "top bottom", end: "bottom top", scrub: 0.9 } });
           const initials = main.querySelector(".initials-sculpture");
           if (initials) gsap.fromTo(initials, { y: -12 }, { y: 20, ease: "none", scrollTrigger: { trigger: ".about-sculpture-card", start: "top bottom", end: "bottom top", scrub: 0.9 } });
 

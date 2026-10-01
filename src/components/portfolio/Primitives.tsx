@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowDown, ArrowRight, ArrowUpRight, Github } from "lucide-react";
 import { person } from "@/data/portfolio";
+import { BotanicalBranch } from "./Botanical";
 
 export function Eyebrow({ children, dot = false }: { children: React.ReactNode; dot?: boolean }) {
   return <p className="eyebrow">{dot && <span className="status-dot" aria-hidden="true" />}{children}</p>;
@@ -10,6 +11,7 @@ export function PageIntro({ number, label, title, italic, text, children }: {
   number: string; label: string; title: string; italic?: string; text: string; children?: React.ReactNode;
 }) {
   return <section className="page-intro container">
+    <BotanicalBranch className="page-intro-botanical" />
     <Eyebrow><span className="index-number">{number}</span>{label}</Eyebrow>
     <div className="intro-grid">
       <h1>{title}{italic && <><br /><span className="serif-word">{italic}</span></>}</h1>
@@ -31,10 +33,10 @@ export function ActionLink({ href, children, primary = false, external = false, 
 
 export function CallToAction() {
   return <section className="container cta-section">
-    <div className="cta-orbit" aria-hidden="true"><span /><span /><span /></div>
+    <BotanicalBranch className="cta-botanical" />
     <div className="cta-content">
-      <Eyebrow>Have something in mind?</Eyebrow>
-      <h2>Let&apos;s build<br /><span className="serif-word">what&apos;s next.</span></h2>
+      <Eyebrow>A new idea starts here</Eyebrow>
+      <h2>Let&apos;s grow<br /><span className="serif-word">something good.</span></h2>
       <ActionLink href="/contact" primary>Start a conversation</ActionLink>
     </div>
     <span className="cta-coordinate mono" aria-hidden="true">IDEA → SYSTEM → EXPERIENCE</span>

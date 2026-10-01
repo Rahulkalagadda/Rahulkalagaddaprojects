@@ -40,7 +40,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
   page.on("pageerror", error => errors.push(error.message));
   const routes = [
-    "/", "/projects", "/about", "/expertise", "/playground", "/contact", "/resume",
+    "/", "/projects", "/about", "/expertise", "/playground", "/contact", "/resume", "/credits",
     "/projects/sevasetu-ai", "/projects/voice-ai-agent", "/projects/estateflow-crm",
     "/projects/travel-booking", "/projects/internal-docs-assistant", "/projects/doctorease",
   ];
@@ -56,6 +56,13 @@ try {
   assert.equal(missing.status(), 404, "Unknown case study should return 404");
   await page.goto(origin, { waitUntil: "networkidle" });
   await page.locator('[data-scene-variant="hero"][data-scene-state="ready"]').waitFor({ timeout: 45000 });
+  assert.equal(await page.locator('[data-scene-variant="hero"]').getAttribute("data-models-loaded"), "3", "All hero foliage models load");
+  await page.mouse.move(1200, 500);
+  await page.waitForTimeout(500);
+  const heroParallaxAfter = await page.locator('[data-scene-variant="hero"] canvas').screenshot();
+  await page.mouse.move(300, 200);
+  await page.waitForTimeout(500);
+  assert.ok(!heroParallaxAfter.equals(await page.locator('[data-scene-variant="hero"] canvas').screenshot()), "Forest camera and foliage react to pointer motion");
   await revealPageForCapture(page);
   await page.screenshot({ path: "artifacts/home-desktop.png", fullPage: true });
   const preview = await page.screenshot({ type: "jpeg", quality: 50 });
@@ -114,32 +121,35 @@ try {
   assert.equal(await page.locator(".project-card").count(), 2, "Technology search");
 
   await page.goto(origin + "/playground", { waitUntil: "networkidle" });
-  await page.locator('[data-scene-state="ready"]').waitFor({ timeout: 45000 });
+  await page.locator('[data-scene-variant="lab"][data-scene-state="ready"]').waitFor({ timeout: 45000 });
+  assert.equal(await page.locator('[data-scene-variant="lab"]').getAttribute("data-models-loaded"), "3", "All realistic forest models load");
   await page.getByRole("button", { name: "Pause motion", exact: true }).click();
-  const canvas = page.locator(".scene-host canvas");
+  const canvas = page.locator(".forest-scene-lab canvas");
   const before = await canvas.screenshot();
-  await page.getByRole("button", { name: "Cobalt", exact: true }).click();
-  assert.equal(await page.getByRole("button", { name: "Cobalt", exact: true }).getAttribute("aria-pressed"), "true");
+  await page.getByRole("button", { name: "Sunrise", exact: true }).click();
+  assert.equal(await page.getByRole("button", { name: "Sunrise", exact: true }).getAttribute("aria-pressed"), "true");
   const after = await canvas.screenshot();
-  assert.ok(!before.equals(after), "Material control changes rendered pixels");
-  await page.getByRole("button", { name: "Orbit", exact: true }).click();
-  assert.equal(await page.getByRole("button", { name: "Orbit", exact: true }).getAttribute("aria-pressed"), "true");
-  const orbit = await canvas.screenshot();
-  assert.ok(!after.equals(orbit), "Geometry control changes rendered pixels");
+  assert.ok(!before.equals(after), "Lighting control changes rendered forest pixels");
+  await page.getByRole("button", { name: "Fireflies", exact: true }).click();
+  assert.equal(await page.getByRole("button", { name: "Fireflies", exact: true }).getAttribute("aria-pressed"), "false");
+  const withoutFlies = await canvas.screenshot();
+  assert.ok(!after.equals(withoutFlies), "Fireflies control changes rendered forest pixels");
+  await page.getByRole("button", { name: "Forest mist", exact: true }).click();
+  const withoutMist = await canvas.screenshot();
+  assert.ok(!withoutFlies.equals(withoutMist), "Mist control changes rendered forest pixels");
   await canvas.focus();
   await page.keyboard.press("ArrowRight");
   const rotated = await canvas.screenshot();
-  assert.ok(!orbit.equals(rotated), "Keyboard rotation changes rendered pixels");
-  await page.getByRole("button", { name: "Helix", exact: true }).click();
-  const helix = await canvas.screenshot();
-  assert.ok(!rotated.equals(helix), "Helix changes the rendered geometry");
-  await page.getByRole("button", { name: "Iridescent", exact: true }).click();
-  assert.ok(!helix.equals(await canvas.screenshot()), "Iridescence changes rendered material");
-  await page.getByRole("button", { name: "Reset sculpture and controls" }).click();
-  assert.equal(await page.getByRole("button", { name: "Knot", exact: true }).getAttribute("aria-pressed"), "true");
-  assert.equal(await page.getByRole("button", { name: "Chrome", exact: true }).getAttribute("aria-pressed"), "true");
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-  await page.waitForTimeout(1000);
+  assert.ok(!withoutMist.equals(rotated), "Keyboard exploration changes rendered forest pixels");
+  await page.getByRole("slider", { name: "Wind strength" }).focus();
+  await page.keyboard.press("Home");
+  assert.equal(await page.locator('output[for="forest-wind"]').textContent(), "Still", "Wind setting updates");
+  await page.getByRole("button", { name: "Reset forest and controls" }).click();
+  assert.equal(await page.getByRole("button", { name: "Moonlight", exact: true }).getAttribute("aria-pressed"), "true");
+  assert.equal(await page.getByRole("button", { name: "Fireflies", exact: true }).getAttribute("aria-pressed"), "true");
+  assert.equal(await page.getByRole("button", { name: "Forest mist", exact: true }).getAttribute("aria-pressed"), "true");
+  assert.equal(await page.getByRole("slider", { name: "Wind strength" }).inputValue(), "0.8");
+  await revealPageForCapture(page);
   await page.screenshot({ path: "artifacts/playground-desktop.png", fullPage: true });
 
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -148,10 +158,10 @@ try {
   assert.equal(await page.getByRole("button", { name: "Play motion", exact: true }).count(), 1, "Reduced motion starts paused");
   assert.equal(await page.locator("html").getAttribute("data-scrolling"), "native", "Reduced motion uses native scrolling");
   await page.screenshot({ path: "artifacts/playground-reduced.png", fullPage: true });
-  const stillOne = await page.locator(".scene-host canvas").screenshot();
+  const stillOne = await page.locator(".forest-scene-lab canvas").screenshot();
   await page.waitForTimeout(300);
-  const stillTwo = await page.locator(".scene-host canvas").screenshot();
-  assert.ok(stillOne.equals(stillTwo), "Reduced-motion sculpture remains still");
+  const stillTwo = await page.locator(".forest-scene-lab canvas").screenshot();
+  assert.ok(stillOne.equals(stillTwo), "Reduced-motion forest remains still");
   await page.emulateMedia({ reducedMotion: "no-preference" });
 
   await page.goto(origin + "/contact", { waitUntil: "networkidle" });
@@ -194,9 +204,22 @@ try {
   await page.goto(origin + "/playground", { waitUntil: "networkidle" });
   await page.locator('[data-scene-state="ready"]').waitFor({ timeout: 45000 });
   await page.screenshot({ path: "artifacts/playground-mobile.png", fullPage: true });
+  const fallbackPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await fallbackPage.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function(type, ...args) {
+      if (String(type).startsWith("webgl") || type === "experimental-webgl") return null;
+      return original.call(this, type, ...args);
+    };
+  });
+  await fallbackPage.goto(origin + "/playground", { waitUntil: "networkidle" });
+  await fallbackPage.locator('[data-scene-state="fallback"]').waitFor({ timeout: 45000 });
+  assert.equal(await fallbackPage.getByRole("status").isVisible(), true, "WebGL fallback keeps a readable forest and explanation");
+  await fallbackPage.screenshot({ path: "artifacts/forest-fallback.png", fullPage: true });
+  await fallbackPage.close();
   assert.deepEqual(errors, [], "No uncaught browser errors");
   assert.deepEqual(failures, [], "Motion behavior checks");
-  console.log("PASS: 13 routes, 404, desktop/mobile overflow, command search, filters, contact encoding, theme persistence, rendered 3D controls and new geometry/materials, smooth wheel/anchors, global motion pause, reduced motion.");
+  console.log("PASS: 14 routes, 404, desktop/mobile overflow, command search, filters, contact encoding, theme persistence, three real foliage models, rendered forest lighting/fireflies/mist/keyboard controls, smooth wheel/anchors, global motion pause, reduced motion, WebGL fallback.");
 } finally {
   await browser?.close();
   server.kill("SIGTERM");

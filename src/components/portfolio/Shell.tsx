@@ -7,6 +7,7 @@ import { ArrowUpRight, Command, Github, Linkedin, Menu, Moon, Search, Sun, X } f
 import { navigation, person, projects } from "@/data/portfolio";
 import { MotionProvider, MotionToggle } from "./MotionProvider";
 import { MotionEngine } from "./MotionEngine";
+import { LeafMark } from "./Botanical";
 
 export function Shell({ children }: { children: React.ReactNode }) {
   return <MotionProvider><ShellLayout>{children}</ShellLayout></MotionProvider>;
@@ -78,7 +79,7 @@ function ShellLayout({ children }: { children: React.ReactNode }) {
     <header className="site-header">
       <span className="scroll-progress" aria-hidden="true" />
       <div className="container header-inner">
-        <Link href="/" className="brand" aria-label="Rahul Kalagadda — home"><span className="brand-monogram">r<span>k</span><i /></span><span className="brand-caption">RAHUL<br />KALAGADDA</span></Link>
+        <Link href="/" className="brand" aria-label="Rahul Kalagadda — home"><LeafMark className="brand-leaf" /><span className="brand-monogram">r<span>k</span><i /></span><span className="brand-caption">RAHUL<br />KALAGADDA</span></Link>
         <nav className="desktop-nav" aria-label="Main navigation">{navigation.slice(0, 5).map(item => <Link key={item.href} href={item.href} className={isActive(item.href) ? "nav-link active" : "nav-link"} aria-current={isActive(item.href) ? "page" : undefined}>{item.label}</Link>)}</nav>
         <div className="header-actions">
           <button className="icon-button command-trigger" onClick={() => { setQuery(""); setCommandOpen(true); }} aria-label="Search pages and projects" title="Search · Ctrl/⌘ K"><Command size={17} /></button>
@@ -92,8 +93,8 @@ function ShellLayout({ children }: { children: React.ReactNode }) {
     </header>
     <main id="main-content" tabIndex={-1}>{children}</main>
     <footer className="site-footer container">
-      <div className="footer-top"><Link href="/" className="footer-name">Rahul Kalagadda<span className="blue-dot">.</span></Link><p>Intelligence. Engineering.<br />A little imagination.</p><div className="footer-social"><a href={person.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub"><Github size={19} /></a><a href={person.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><Linkedin size={19} /></a><a href={"mailto:" + person.email} aria-label="Email Rahul"><ArrowUpRight size={22} /></a></div></div>
-      <div className="footer-bottom mono"><span>© {new Date().getFullYear()} Rahul Kalagadda</span><span>Built with curiosity. Made to explore.</span><Link href="/resume">Résumé<ArrowUpRight size={13} /></Link></div>
+      <div className="footer-top"><Link href="/" className="footer-name">Rahul Kalagadda<span className="blue-dot">.</span></Link><p>Rooted in curiosity.<br />Built with intention.</p><div className="footer-social"><a href={person.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub"><Github size={19} /></a><a href={person.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><Linkedin size={19} /></a><a href={"mailto:" + person.email} aria-label="Email Rahul"><ArrowUpRight size={22} /></a></div></div>
+      <div className="footer-bottom mono"><span>© {new Date().getFullYear()} Rahul Kalagadda</span><span>WILD SYSTEMS · IDEAS IN BLOOM.</span><div><Link href="/credits">Forest credits<ArrowUpRight size={13} /></Link><Link href="/resume">Résumé<ArrowUpRight size={13} /></Link></div></div>
     </footer>
     <dialog ref={dialog} data-lenis-prevent className="command-dialog" onCancel={() => setCommandOpen(false)} onClose={() => setCommandOpen(false)} onClick={event => { if (event.target === event.currentTarget) setCommandOpen(false); }} aria-labelledby="command-title">
       <div className="command-top"><Search size={20} /><label id="command-title" className="sr-only" htmlFor="command-query">Search pages and projects</label><input id="command-query" ref={input} value={query} onChange={event => setQuery(event.target.value)} placeholder="Where would you like to go?" autoComplete="off" /><button className="icon-button" onClick={() => setCommandOpen(false)} aria-label="Close search"><X size={19} /></button></div>
@@ -102,4 +103,3 @@ function ShellLayout({ children }: { children: React.ReactNode }) {
     </dialog>
   </>;
 }
-
