@@ -4,6 +4,7 @@ import { Shell } from "@/components/portfolio/Shell";
 import "lenis/dist/lenis.css";
 import "./globals.css";
 import "./forest.css";
+import "./project-story.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal", "italic"], variable: "--font-cormorant", display: "swap" });

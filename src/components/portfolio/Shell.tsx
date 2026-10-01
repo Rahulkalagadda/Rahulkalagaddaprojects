@@ -70,6 +70,7 @@ function ShellLayout({ children }: { children: React.ReactNode }) {
   const commands = [
     ...navigation.map(item => ({ ...item, subtitle: "Explore the portfolio" })),
     { href: "/resume", label: "Résumé", subtitle: "Read, print, or save as PDF" },
+    { href: "/projects/compare", label: "Compare projects", subtitle: "Explore stacks, architecture, and project scope side by side" },
     ...projects.map(project => ({ href: "/projects/" + project.slug, label: project.name, subtitle: project.category + " · " + project.status })),
   ].filter(item => (item.label + " " + item.subtitle).toLowerCase().includes(query.toLowerCase()));
 

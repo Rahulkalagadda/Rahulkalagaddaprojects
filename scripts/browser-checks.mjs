@@ -128,7 +128,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, reducedMotion: "reduce" });
   page.on("pageerror", error => errors.push(error.message));
   const routes = [
-    "/", "/projects", "/about", "/expertise", "/playground", "/contact", "/resume", "/credits",
+    "/", "/projects", "/projects/compare", "/about", "/expertise", "/playground", "/contact", "/resume", "/credits",
     "/projects/sevasetu-ai", "/projects/voice-ai-agent", "/projects/estateflow-crm",
     "/projects/travel-booking", "/projects/internal-docs-assistant", "/projects/doctorease",
   ];
@@ -139,7 +139,7 @@ try {
     assert.equal(await page.locator("main h1").count(), 1, "One page heading: " + route);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     assert.equal(overflow, false, "Desktop horizontal overflow: " + route);
-    if (["/about", "/projects", "/expertise", "/contact", "/projects/sevasetu-ai"].includes(route)) {
+    if (["/about", "/projects", "/projects/compare", "/expertise", "/contact", "/projects/sevasetu-ai"].includes(route)) {
       await revealPageForCapture(page);
       await page.screenshot({ path: "artifacts/" + route.slice(1).replaceAll("/", "-") + "-desktop.png", fullPage: true });
     }
@@ -240,6 +240,52 @@ try {
   await page.getByRole("searchbox", { name: "Search projects or technologies" }).fill("FAISS");
   assert.equal(await page.locator(".project-card").count(), 2, "Technology search");
 
+  await page.getByRole("link", { name: "Compare projects", exact: true }).click();
+  await page.waitForURL("**/projects/compare*");
+  assert.equal(await page.locator(".comparison-project").count(), 2, "Comparison starts with AI and full-stack projects");
+  const choose = page.getByRole("group", { name: "Choose projects to compare" });
+  await choose.getByRole("button", { name: /Voice AI Agent/ }).click();
+  assert.equal(await page.locator(".comparison-project").count(), 3, "A third project can be added");
+  assert.equal(await choose.getByRole("button", { name: /DoctorEase/ }).isDisabled(), true, "Comparison is limited to three projects");
+  await choose.getByRole("button", { name: /EstateFlow CRM/ }).click();
+  await choose.getByRole("button", { name: /DoctorEase/ }).click();
+  await page.waitForFunction(() => new URLSearchParams(location.search).get("selection") === "sevasetu-ai,voice-ai-agent,doctorease");
+  await page.reload({ waitUntil: "networkidle" });
+  assert.deepEqual(await page.locator(".comparison-project h3").allTextContents(), ["SevaSetu AI", "Voice AI Agent", "DoctorEase"], "A shared comparison restores the selected projects in order");
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin });
+  await page.getByRole("button", { name: "Copy comparison link" }).click();
+  await page.getByRole("status").filter({ hasText: "Comparison link copied." }).waitFor();
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), page.url(), "The copied comparison link preserves the selection");
+  await revealPageForCapture(page);
+  await page.screenshot({ path: "artifacts/comparison-three-desktop.png", fullPage: true });
+  await page.getByRole("button", { name: "Reset selection" }).click();
+  await choose.getByRole("button", { name: /SevaSetu AI/ }).click();
+  await choose.getByRole("button", { name: /EstateFlow CRM/ }).click();
+  assert.equal(await page.locator(".comparison-empty").count(), 1, "Removing every project shows a useful empty state");
+  await page.getByRole("button", { name: "Start with AI + full stack" }).click();
+  assert.equal(await page.locator(".comparison-project").count(), 2, "Empty state restores an initial collection");
+  await page.goto(origin + "/projects/compare?selection=invalid,voice-ai-agent,voice-ai-agent", { waitUntil: "networkidle" });
+  assert.deepEqual(await page.locator(".comparison-project h3").allTextContents(), ["Voice AI Agent"], "Shared selections ignore invalid and duplicate projects");
+
+  await page.goto(origin + "/projects/voice-ai-agent", { waitUntil: "networkidle" });
+  const architecture = page.locator(".architecture-explorer");
+  await architecture.getByRole("tab").first().focus();
+  await page.keyboard.press("End");
+  assert.equal(await architecture.getByRole("tab", { selected: true }).locator("strong").textContent(), "Speech output", "End selects the final architecture stage");
+  assert.equal(await architecture.getByRole("button", { name: "Next architecture stage" }).isDisabled(), true, "Architecture does not advance past its final stage");
+  await page.keyboard.press("Home");
+  assert.equal(await architecture.getByRole("tab", { selected: true }).locator("strong").textContent(), "Audio input", "Home selects the first architecture stage");
+  await page.keyboard.press("ArrowRight");
+  assert.equal(await architecture.getByRole("tabpanel").locator("h3").textContent(), "Transcription.", "Arrow keys update the project-specific stage detail");
+  await architecture.getByRole("button", { name: "Next architecture stage" }).click();
+  assert.equal(await architecture.locator(".architecture-stage-description").textContent(), "Knowledge context and response generation", "Next shows the selected stage's repository-backed detail");
+  assert.equal(await architecture.locator(".architecture-map-node.is-active").count(), 1, "The system illustration highlights one current stage");
+  await architecture.screenshot({ path: "artifacts/architecture-voice-desktop.png" });
+  await page.getByRole("link", { name: "Compare this project" }).click();
+  await page.waitForURL("**/projects/compare*");
+  await page.waitForFunction(() => document.querySelector(".comparison-project h3")?.textContent === "Voice AI Agent");
+  assert.deepEqual(await page.locator(".comparison-project h3").allTextContents(), ["Voice AI Agent", "EstateFlow CRM"], "Case study comparison starts with the current project");
+
   await page.goto(origin + "/playground", { waitUntil: "networkidle" });
   await page.locator('[data-scene-variant="lab"][data-scene-state="ready"]').waitFor({ timeout: 45000 });
   assert.equal(await page.locator('[data-scene-variant="lab"]').getAttribute("data-models-loaded"), "3", "All realistic forest models load");
@@ -318,6 +364,15 @@ try {
       failures.push("Mobile horizontal overflow: " + route);
     }
   }
+  await page.goto(origin + "/projects/compare?selection=sevasetu-ai,voice-ai-agent,doctorease", { waitUntil: "networkidle" });
+  assert.equal(await page.locator(".comparison-project").count(), 3, "Phone comparison retains all selected projects");
+  const comparisonColumns = await page.locator(".comparison-grid").evaluate(element => getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/).length);
+  assert.equal(comparisonColumns, 1, "Phone comparison stacks projects into one readable column");
+  await revealPageForCapture(page);
+  await page.screenshot({ path: "artifacts/comparison-mobile.png", fullPage: true });
+  await page.goto(origin + "/projects/voice-ai-agent", { waitUntil: "networkidle" });
+  await page.locator(".architecture-explorer").getByRole("tab").last().click();
+  await page.locator(".architecture-explorer").screenshot({ path: "artifacts/architecture-voice-mobile.png" });
   await page.goto(origin, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.locator("#mobile-navigation").getByRole("link", { name: "About", exact: true }).click();
@@ -348,7 +403,7 @@ try {
 
   assert.deepEqual(errors, [], "No uncaught browser errors");
   assert.deepEqual(failures, [], "Motion behavior checks");
-  console.log("PASS: 14 routes, 404, desktop/mobile overflow, command search, filters, contact encoding, theme persistence, three real foliage models, rendered forest lighting/fireflies/mist/keyboard controls, smooth wheel/anchors, global motion pause, reduced motion, WebGL fallback.");
+  console.log("PASS: 15 routes, 404, desktop/mobile overflow, project comparison and shared links, keyboard architecture walkthroughs, command search, filters, contact encoding, theme persistence, three real foliage models, rendered forest lighting/fireflies/mist/keyboard controls, smooth wheel/anchors, global motion pause, reduced motion, WebGL fallback.");
 } finally {
   await mediaBrowser?.close();
   await browser?.close();
