@@ -79,11 +79,14 @@ try {
   // Record in the page from the wheel event itself; protocol latency must not miss the animation.
   await page.evaluate(() => {
     window.__wheelSamples = [];
+    window.__wheelFrameTimes = [];
     window.__wheelSampleDone = false;
     window.addEventListener("wheel", () => {
       window.__wheelSamples.push(Math.round(window.scrollY));
+      window.__wheelFrameTimes.push(Math.round(performance.now()));
       const capture = () => {
         window.__wheelSamples.push(Math.round(window.scrollY));
+        window.__wheelFrameTimes.push(Math.round(performance.now()));
         if (window.__wheelSamples.length < 16) requestAnimationFrame(capture);
         else window.__wheelSampleDone = true;
       };
@@ -95,12 +98,13 @@ try {
   await page.waitForFunction(() => window.__wheelSampleDone);
   const scrollSamples = await page.evaluate(() => window.__wheelSamples);
   console.log("SCROLL_SAMPLES:" + JSON.stringify(scrollSamples));
+  console.log("SCROLL_FRAME_TIMES:" + JSON.stringify(await page.evaluate(() => window.__wheelFrameTimes)));
   assert.ok(new Set(scrollSamples).size > 2, "Wheel scrolling interpolates across frames with the forest active");
-  await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 10000 });
+  await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 30000 });
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await page.waitForTimeout(500);
   await page.locator(".scroll-cue").click();
-  await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 10000 });
+  await page.waitForFunction(() => !document.documentElement.classList.contains("lenis-scrolling"), undefined, { timeout: 30000 });
   const anchor = await page.locator("#selected-work").evaluate(element => ({ top: element.getBoundingClientRect().top, scrollY: window.scrollY, padding: getComputedStyle(document.documentElement).scrollPaddingTop, classes: document.documentElement.className }));
   console.log("ANCHOR_GEOMETRY:" + JSON.stringify(anchor));
   await page.screenshot({ path: "artifacts/anchor-settled.png" });

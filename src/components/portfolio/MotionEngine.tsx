@@ -64,7 +64,7 @@ export function MotionEngine({ blocked }: { blocked: boolean }) {
         const tick = (time: number) => {
           if (document.hidden) { previousTick = 0; return; }
           // Keep a long frame (or a resumed tab) from finishing an entire scroll in one step.
-          const dt = previousTick ? Math.max(0, Math.min(time - previousTick, 0.04)) : 1 / 60;
+          const dt = previousTick ? Math.max(0, Math.min(time - previousTick, 0.08)) : 1 / 60;
           previousTick = time;
           scrollTime += dt * 1000;
           lenis.raf(scrollTime);

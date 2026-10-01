@@ -41,7 +41,11 @@ export function ForestScene({ variant = "hero", light = "moonlight", wind = 0.8,
       if (disposed) return;
       const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" });
       const small = window.innerWidth < 700;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, small ? 1 : 1.4));
+      const gl = renderer.getContext();
+      const rendererInfo = gl.getExtension("WEBGL_debug_renderer_info");
+      const softwareRenderer = rendererInfo && /swiftshader|llvmpipe|software/i.test(String(gl.getParameter(rendererInfo.UNMASKED_RENDERER_WEBGL)));
+      // A software GPU still gets the complete scene, at a smaller render resolution.
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, softwareRenderer ? 0.8 : small ? 1 : 1.25));
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.15;
